@@ -1,6 +1,6 @@
 {
     "name": "haeley-colors",
-    "version": "0.1.1",
+    "version": "0.0.0",
     "license": "MIT",
     "description": "Color and color scale tools for the haeley real-time rendering framework.",
     "author": "Daniel Limberger",
@@ -14,6 +14,7 @@
     "files": [
         "dist/*",
         "source/**/*.ts",
+        "source/data/*.json",
         "source/**/*.json"
     ],
     "bugs": {
@@ -44,8 +45,8 @@
         "coveralls": "^3.1.1",
         "eslint": "^8.5.0",
         "git-rev-sync": "^3.0.1",
-        "haeley-auxiliaries": "^0.2.1",
-        "haeley-math": "^0.1.1",
+        "haeley-auxiliaries": "^0.2.2",
+        "haeley-math": "^0.1.2",
         "mocha": "^9.1.3",
         "nyc": "^15.1.0",
         "rimraf": "^3.0.2",

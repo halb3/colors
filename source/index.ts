@@ -4,7 +4,11 @@
 
 export * from './about';
 
-// export * from './color';
-// export * from './colorscale';
+export * from './conversion';
+export * from './lerp';
+
+export * from './color';
+
+export * from './colorscale';
 
 /* spellchecker: enable */

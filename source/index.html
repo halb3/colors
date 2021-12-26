@@ -33,13 +33,79 @@
 
             </div>
         </div>
+
+        <div class="row mt-4 justify-content-center">
+            <div class="col-10-sm col-8 text-start">
+                <p class="pt-1">Test: fetch scales from json files:</p>
+            </div>
+        </div>
+
+        <div class="row justify-content-center" id="scale-0">
+            <div class="col-3-sm col-3 text-end">
+                <h4 class="pt-1">YlGnBu <strong>5</strong></h4>
+            </div>
+            <div class="col-7-sm col-5">
+                <div class="btn-group me-2" role="group" aria-label="First group">
+                    <button id="color-0" type="button" class="btn btn-outline-dark">0</button>
+                    <button id="color-1" type="button" class="btn btn-outline-dark">1</button>
+                    <button id="color-2" type="button" class="btn btn-outline-dark">2</button>
+                    <button id="color-3" type="button" class="btn btn-outline-dark">3</button>
+                    <button id="color-4" type="button" class="btn btn-outline-dark">4</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="row justify-content-center" id="scale-1">
+            <div class="col-3-sm col-3 text-end">
+                <h4 class="pt-1">Magma <strong>8</strong></h4>
+            </div>
+            <div class="col-7-sm col-5">
+                <div class="btn-group me-2" role="group" aria-label="First group">
+                    <button id="color-0" type="button" class="btn btn-outline-dark">0</button>
+                    <button id="color-1" type="button" class="btn btn-outline-dark">1</button>
+                    <button id="color-2" type="button" class="btn btn-outline-dark">2</button>
+                    <button id="color-3" type="button" class="btn btn-outline-dark">3</button>
+                    <button id="color-4" type="button" class="btn btn-outline-dark">4</button>
+                    <button id="color-5" type="button" class="btn btn-outline-dark">5</button>
+                    <button id="color-6" type="button" class="btn btn-outline-dark">6</button>
+                    <button id="color-7" type="button" class="btn btn-outline-dark">7</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4 justify-content-center">
+            <div class="col-10-sm col-8 text-start">
+                <p class="pt-1">Test: create lerped image from a scale:</p>
+            </div>
+        </div>
+
+        <div class="row justify-content-center" id="scale-2">
+            <div class="col-3-sm col-3 text-end">
+                <h4 class="pt-1">Magma RGBA <strong>Uint8</strong></h4>
+            </div>
+            <div class="col-7-sm col-5">
+                <pre class="text-wrap" id="bitsUI8"></pre>
+            </div>
+        </div>
+
+        <div class="row justify-content-center" id="scale-2">
+            <div class="col-3-sm col-3 text-end">
+                <h4 class="pt-1">Magma RGBA <strong>Float32</strong></h4>
+            </div>
+            <div class="col-7-sm col-5">
+                <pre class="text-wrap" id="bitsF32"></pre>
+            </div>
+        </div>
+
     </section>
 
 </body>
 
 <script type="module">
+    import * as auxiliaries from 'haeley-auxiliaries';
+    import * as math from 'haeley-math';
     import * as colors from './index.ts';
-    window['haeley'] = { colors: colors };
+    window['haeley'] = { auxiliaries, math, colors };
 </script>
 
 <script>
@@ -51,6 +117,29 @@
         document.querySelector('#commit').innerHTML = haeley.colors.commit();
 
         console.log("'haeley-colors' imported:", haeley);
+
+        haeley.colors.ColorScale.fromPreset('./colorbrewer.json', 'YlGnBu', 5).then(
+            (value) => {
+                window['YlGnBu'] = value; console.log(`YlGnBu scale from colorbrewer stored to 'YlGnBu'`);
+
+                for (let i = 0; i < YlGnBu.colors.length; ++i)
+                    document.querySelector(`#scale-0 #color-${i}`).style.backgroundColor = YlGnBu.colors[i].hexRGB;
+            });
+
+        haeley.colors.ColorScale.fromPreset('./smithwalt.json', 'plasma', 8).then(
+            (value) => {
+                window['plasma'] = value; console.log(`plasma scale from smithwalt stored to 'plasma'`);
+
+                for (let i = 0; i < plasma.colors.length; ++i)
+                    document.querySelector(`#scale-1 #color-${i}`).style.backgroundColor = plasma.colors[i].hexRGB;
+
+
+                document.querySelector('#scale-2 #bitsUI8').innerHTML = plasma.bitsUI8().reduce(
+                    (accumulator, value, index) => accumulator += `${value}${(index % 4) == 3 ? '<br>' : ' '}`, '');
+                document.querySelector('#scale-2 #bitsF32').innerHTML = plasma.bitsF32().reduce(
+                    (accumulator, value, index) => accumulator += `${value}${(index % 4) == 3 ? '<br>' : ' '}`, '');
+            });
+
     };
 </script>
 
