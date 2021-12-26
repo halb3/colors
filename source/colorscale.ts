@@ -83,6 +83,7 @@ export class ColorScale {
     static fromPreset(url: string, preset: string, stepCount: number): Promise<ColorScale> {
 
         /* This transforms the fetched json data into a color scale. */
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const transform = (data: any): ColorScale | undefined => {
 
             /* Find named preset. */
@@ -122,10 +123,10 @@ export class ColorScale {
 
             let positions: Array<number> | undefined;
             for (let i = 0; i < positionsByStepCount.length; ++i) {
-                if (positionsByStepCount![i].length !== colors.length) {
+                if (positionsByStepCount[i].length !== colors.length) {
                     continue;
                 }
-                positions = positionsByStepCount![i];
+                positions = positionsByStepCount[i];
             }
             return ColorScale.fromArray(colors, type, stepCount, positions);
         };
