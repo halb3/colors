@@ -1,6 +1,6 @@
 {
     "name": "haeley-colors",
-    "version": "0.0.0",
+    "version": "0.1.0",
     "license": "MIT",
     "description": "Color and color scale tools for the haeley real-time rendering framework.",
     "author": "Daniel Limberger",
