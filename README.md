@@ -1,4 +1,4 @@
-# haeley-colors
+# haeley-**colors**
 
 *haeley-colors* provides a comprehensive `Color` class as well as a `ColorScale` class with various, research oriented color scales.
 This library can be used as a standalone dependency, but is developed and intended for [`haeley`](https://github.com/halb3/haeley) real-time rendering framework.
