@@ -37,12 +37,6 @@ describe('ColorScale', () => {
         consoleLogStub.restore();
     });
 
-    it('should be loadable from preset', () => {
-        /* eslint-disable-next-line no-unused-expressions */
-        ColorScale.fromPreset('../source/data/colorbrewer', 'YlGnBu', 7).
-            then((value) => expect(value).to.not.be.undefined);
-    });
-
     it('should be creatable from an array', () => {
         /* eslint-disable-next-line no-unused-expressions */
         expect(defaultColorScale).to.not.be.undefined;
