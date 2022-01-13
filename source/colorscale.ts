@@ -343,10 +343,10 @@ export class ColorScale {
      * @param space - Color space that is to be used for the array.
      * @param alpha - Whether or not alpha is to be included.
      */
-    bitsUI8(space: Space = Space.RGB, alpha: boolean = true): Uint8Array {
+    bitsUI8(space: Space = Space.RGB, alpha: boolean = true): Uint8ClampedArray {
         const size = this._colors.length;
         const stride = alpha ? 4 : 3;
-        const bits = new Uint8Array(size * stride);
+        const bits = new Uint8ClampedArray(size * stride);
 
         for (let i = 0; i < size; ++i) {
             const color = this._colors[i].tuple(space, alpha);

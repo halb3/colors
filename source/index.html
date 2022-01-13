@@ -21,10 +21,10 @@
 
     <section class="container mt-5">
         <div class="row justify-content-center">
-            <div class="col-10-sm col-8">
+            <div class="col-12 col-lg-8">
 
                 <h1>haeley-<strong>colors</strong></h1>
-                <p class="lead">Test Page</p>
+                <p class="lead">Test Page for Development</p>
                 <p>// about:
                     version <code id="version">version</code>,
                     branch <code id="branch">branch</code>,
@@ -35,69 +35,39 @@
         </div>
 
         <div class="row mt-4 justify-content-center">
-            <div class="col-10-sm col-8 text-start">
-                <p class="pt-1">Test: fetch scales from json files:</p>
+
+            <div class="col-12 col-lg-8 text-start">
+                <table class="table caption-top small">
+                    <caption>Test: fetch scales from json files:</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">
+                                <code class="fw-bold">&lt;Preset&gt;</code>
+                                <code class="fw-bold text-muted">-&lt;NumColors&gt;</code>
+                            </th>
+                            <th scope="col">Preset File</th>
+                            <th scope="col">Scale Preview</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scales">
+                    </tbody>
+                </table>
+
             </div>
         </div>
 
-        <div class="row justify-content-center" id="scale-0">
-            <div class="col-3-sm col-3 text-end">
-                <h4 class="pt-1">YlGnBu <strong>5</strong></h4>
-            </div>
-            <div class="col-7-sm col-5">
-                <div class="btn-group me-2" role="group" aria-label="First group">
-                    <button id="color-0" type="button" class="btn btn-outline-dark">0</button>
-                    <button id="color-1" type="button" class="btn btn-outline-dark">1</button>
-                    <button id="color-2" type="button" class="btn btn-outline-dark">2</button>
-                    <button id="color-3" type="button" class="btn btn-outline-dark">3</button>
-                    <button id="color-4" type="button" class="btn btn-outline-dark">4</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="row justify-content-center" id="scale-1">
-            <div class="col-3-sm col-3 text-end">
-                <h4 class="pt-1">Magma <strong>8</strong></h4>
-            </div>
-            <div class="col-7-sm col-5">
-                <div class="btn-group me-2" role="group" aria-label="First group">
-                    <button id="color-0" type="button" class="btn btn-outline-dark">0</button>
-                    <button id="color-1" type="button" class="btn btn-outline-dark">1</button>
-                    <button id="color-2" type="button" class="btn btn-outline-dark">2</button>
-                    <button id="color-3" type="button" class="btn btn-outline-dark">3</button>
-                    <button id="color-4" type="button" class="btn btn-outline-dark">4</button>
-                    <button id="color-5" type="button" class="btn btn-outline-dark">5</button>
-                    <button id="color-6" type="button" class="btn btn-outline-dark">6</button>
-                    <button id="color-7" type="button" class="btn btn-outline-dark">7</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="row mt-4 justify-content-center">
-            <div class="col-10-sm col-8 text-start">
-                <p class="pt-1">Test: create lerped image from a scale:</p>
-            </div>
-        </div>
-
-        <div class="row justify-content-center" id="scale-2">
-            <div class="col-3-sm col-3 text-end">
-                <h4 class="pt-1">Magma RGBA <strong>Uint8</strong></h4>
-            </div>
-            <div class="col-7-sm col-5">
-                <pre class="text-wrap" id="bitsUI8"></pre>
-            </div>
-        </div>
-
-        <div class="row justify-content-center" id="scale-2">
-            <div class="col-3-sm col-3 text-end">
-                <h4 class="pt-1">Magma RGBA <strong>Float32</strong></h4>
-            </div>
-            <div class="col-7-sm col-5">
-                <pre class="text-wrap" id="bitsF32"></pre>
-            </div>
-        </div>
 
     </section>
+
+    <footer>
+        <div class="row text-center">
+            <div class="col-12">
+                <p class="mt-5 mb-4">
+                    &copy; 2016&thinsp;&ndash;&thinsp;<span id="cryear"></span>
+                </p>
+            </div>
+        </div>
+    </footer>
 
 </body>
 
@@ -115,30 +85,80 @@
         document.querySelector('#version').innerHTML = haeley.colors.version();
         document.querySelector('#branch').innerHTML = haeley.colors.branch();
         document.querySelector('#commit').innerHTML = haeley.colors.commit();
+        document.querySelector('#cryear').innerHTML = new Date().getFullYear();
 
         console.log("'haeley-colors' imported:", haeley);
 
-        haeley.colors.ColorScale.fromPreset('./colorbrewer.json', 'YlGnBu', 5).then(
-            (value) => {
-                window['YlGnBu'] = value; console.log(`YlGnBu scale from colorbrewer stored to 'YlGnBu'`);
 
-                for (let i = 0; i < YlGnBu.colors.length; ++i)
-                    document.querySelector(`#scale-0 #color-${i}`).style.backgroundColor = YlGnBu.colors[i].hexRGB;
-            });
+        const presets = [
+            ['smithwalt', 'viridis', 1, false],
+            ['smithwalt', 'viridis', 64, false],
+            ['smithwalt', 'inferno', 7, false],
+            ['smithwalt', 'inferno', 64, false],
 
-        haeley.colors.ColorScale.fromPreset('./smithwalt.json', 'plasma', 8).then(
-            (value) => {
-                window['plasma'] = value; console.log(`plasma scale from smithwalt stored to 'plasma'`);
+            ['marcosci', 'cividis', 7, false],
+            ['marcosci', 'cividis', 64, false],
+            ['smithwalt', 'magma', 7, false],
+            ['smithwalt', 'magma', 64, false],
 
-                for (let i = 0; i < plasma.colors.length; ++i)
-                    document.querySelector(`#scale-1 #color-${i}`).style.backgroundColor = plasma.colors[i].hexRGB;
+            ['colorbrewer', 'Greys', 4, true],
+            ['colorbrewer', 'Greys', 7, true],
+            ['smithwalt', 'plasma', 7, false],
+            ['smithwalt', 'plasma', 64, false],
 
+            ['colorbrewer', 'Spectral', 7, true],
+            ['colorbrewer', 'Spectral', 64, true],
+            ['mikhailov', 'turbo', 16, false],
+            ['mikhailov', 'turbo', 128, false],
 
-                document.querySelector('#scale-2 #bitsUI8').innerHTML = plasma.bitsUI8().reduce(
-                    (accumulator, value, index) => accumulator += `${value}${(index % 4) == 3 ? '<br>' : ' '}`, '');
-                document.querySelector('#scale-2 #bitsF32').innerHTML = plasma.bitsF32().reduce(
-                    (accumulator, value, index) => accumulator += `${value}${(index % 4) == 3 ? '<br>' : ' '}`, '');
-            });
+            ['colorbrewer', 'BrBG', 7, true],
+            ['colorbrewer', 'RdBu', 64, true],
+            ['colorbrewer', 'RdYlBu', 7, true],
+            ['colorbrewer', 'PuOr', 7, true],
+
+            ['colorbrewer', 'OrRd', 4, false],
+            ['colorbrewer', 'OrRd', 7, false],
+            ['colorbrewer', 'RdPu', 4, false],
+            ['colorbrewer', 'RdPu', 7, false],
+
+            ['colorbrewer', 'Accent', 7, false],
+            ['colorbrewer', 'Paired', 7, false],
+            ['colorbrewer', 'Pastel2', 7, false],
+            ['colorbrewer', 'Dark2', 7, false]
+        ];
+
+        var tbody = document.getElementById('scales');
+
+        presets.forEach((value, index) => {
+
+            const file = `./${value[0]}.json`;
+            const preset = value[1];
+            const stepCount = value[2];
+            const invert = value[3];
+
+            tbody.insertAdjacentHTML('beforeend',
+                `<tr class="align-middle m-0 p-0">` +
+                `<th scope="row"><code>${preset}</code><code class="text-muted">-${stepCount}${value[3] ? '-inverted' : ''}</code></th>` +
+                `<td><code class="text-muted">${file}</code></td>` +
+                `<td><canvas class="" id="scale-${index}"></canvas></td>` +
+                `</tr>`);
+
+            haeley.colors.ColorScale.fromPreset(file, preset, stepCount).then(
+                (scale) => {
+                    const canvas = document.getElementById(`scale-${index}`);
+                    const context = canvas.getContext('2d');
+
+                    canvas.width = stepCount;
+                    canvas.height = 1;
+                    if (invert) {
+                        scale.invert();
+                    }
+
+                    const image = new ImageData(scale.bitsUI8(), Math.max(2, stepCount), 1);
+                    context.putImageData(image, 0, 0);
+                });
+
+        });
 
     };
 </script>
@@ -157,6 +177,12 @@
         font-weight: 300 !important;
         font-size: 1em;
         font-family: "Roboto Mono" !important;
+    }
+
+    canvas {
+        image-rendering: pixelated;
+        height: 2rem;
+        width: 14rem;
     }
 </style>
 
