@@ -112,7 +112,7 @@ describe('Color', () => {
     });
 
     it('should log and default on malformed hex color string to RGB(A) conversion', () => {
-        const consoleLogStub = stub(console, 'log');
+        const consoleLogStub = stub(console, 'warn');
         const malformed: Array<string> = ['#', '0x', '', '#0', '0x0', '0', '#00', '0x00', '00', '#00000', '0x00000',
             '00000', '#0000000', '0x0000000', '0000000', '#000000000', '0x000000000', '000000000', 'efg', 'xyz'];
 
@@ -155,7 +155,7 @@ describe('Color', () => {
 
     it('should log and clamp on out of range CMYK components to RGB conversion', () => {
         const color = new Color();
-        const consoleLogStub = stub(console, 'log');
+        const consoleLogStub = stub(console, 'info');
 
         expect(Array.from(color.fromCMYK(-0.1, -0.1, -0.1, -1.0).rgbUI8)).to.have.ordered.members([255, 255, 255]);
         expect(Array.from(color.fromCMYK(+1.1, +0.0, +0.0, +0.0).rgbUI8)).to.have.ordered.members([0, 255, 255]);
@@ -211,7 +211,7 @@ describe('Color', () => {
 
     it('should log and clamp on out of range HSL components to RGB conversion', () => {
         const color = new Color();
-        const consoleLogStub = stub(console, 'log');
+        const consoleLogStub = stub(console, 'info');
 
         expect(Array.from(color.fromHSL(-0.1, -0.1, -0.1).rgbUI8)).to.have.ordered.members([0, 0, 0]);
         expect(Array.from(color.fromHSL(+1.1, +0.1, +0.1).rgbUI8)).to.have.ordered.members([28, 23, 23]);
@@ -315,7 +315,7 @@ describe('Color', () => {
 
     it('should log and clamp on out of range LAB components to RGB conversion', () => {
         const color = new Color();
-        const consoleLogStub = stub(console, 'log');
+        const consoleLogStub = stub(console, 'info');
 
         expect(Array.from(color.fromLAB(-0.1, -0.1, -0.1).rgbUI8)).to.have.ordered.members([0, 66, 189]);
         expect(Array.from(color.fromLAB(+1.1, +0.1, +0.1).rgbUI8)).to.have.ordered.members([0, 255, 255]);
