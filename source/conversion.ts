@@ -1,10 +1,10 @@
 
 /* spellchecker: disable */
 
-import { assert, log, LogLevel } from 'haeley-auxiliaries';
+import { assert, log, LogLevel } from '@haeley/auxiliaries';
 import {
     clampf3, clampf4, GLclampf3, GLclampf4
-} from 'haeley-math';
+} from '@haeley/math';
 
 import { Color } from './color';
 
@@ -243,7 +243,8 @@ export function rgb2cmyk(rgb: GLclampf3): GLclampf4 {
 }
 
 
-const HEX_FORMAT_REGEX = new RegExp(/^(#|0x)?(([0-9a-f]{3}){1,2}|([0-9a-f]{4}){1,2})$/i);
+export const HEX_FORMAT_REGEX = new RegExp(/^(#|0x)?(([0-9a-f]{3}){1,2}|([0-9a-f]{4}){1,2})$/i);
+export const COLOR_STRING_REGEX = new RegExp(/^(rgba?|RGBA?|hsla?|laba?|cmyka?)\((.*?)\)$/i);
 
 /**
  * Converts a color from HEX string to RGBA space. The hex string can start with '#' or '0x' or neither of these.
@@ -302,4 +303,38 @@ export function rgba2hex(rgba: GLclampf4): string {
     const b = to2CharHexCode(rgbaF[2]);
     const a = to2CharHexCode(rgbaF[3]);
     return '#' + r + g + b + a;
+}
+
+
+export const DEFAULT_GAMMA: GLclampf = 2.2;
+
+/**
+ * Applies basic gamma correction to normalized rgb float values.
+ * @param rgb - RGB color tuple: red, green, and blue, each in [0.0, 1.0]
+ * @returns - Gamma corrected srgb values
+ */
+export function rgb2srgb(rgb: GLclampf3, gamma: GLclampf = DEFAULT_GAMMA): GLclampf3 {
+    const srgb = clampf3(rgb, 'RGB input');
+
+    srgb[0] = Math.pow(srgb[0], gamma);
+    srgb[1] = Math.pow(srgb[1], gamma);
+    srgb[2] = Math.pow(srgb[2], gamma);
+
+    return srgb;
+}
+
+/**
+ * Reverses basic gamma correction to normalized, gamma-corrected srgb float values.
+ * @param rgb - RGB color tuple: red, green, and blue, each in [0.0, 1.0]
+ * @returns - Gamma 'reverted' rgb values
+ */
+export function srgb2rgb(srgb: GLclampf3, gamma: GLclampf = DEFAULT_GAMMA): GLclampf3 {
+    const rgb = clampf3(srgb, 'RGB input');
+
+    const oneOverGamma = 1.0 / gamma;
+    rgb[0] = Math.pow(rgb[0], oneOverGamma);
+    rgb[1] = Math.pow(rgb[1], oneOverGamma);
+    rgb[2] = Math.pow(rgb[2], oneOverGamma);
+
+    return rgb;
 }

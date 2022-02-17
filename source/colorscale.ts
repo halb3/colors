@@ -1,8 +1,8 @@
 
 /* spellchecker: disable */
 
-import { assert, fetchJsonAsync, jsonschema } from 'haeley-auxiliaries';
-import { clamp } from 'haeley-math';
+import { assert, fetchJsonAsync, jsonschema } from '@haeley/auxiliaries';
+import { clamp } from '@haeley/math';
 
 import { Color, Space } from './color';
 import { lerp } from './lerp';
@@ -12,21 +12,21 @@ import PresetsSchema from './colorscalepresets.schema.json';
 /* spellchecker: enable */
 
 
-// /**
-//  * Basic color gradient representation that uses color stops, a color at a specific position, to allow for color
-//    queries
-//  * at arbitrary positions. The gradient provides {@link Color} instances to facilitate the use of various color
-//    spaces.
-//  * ```
-//  * const gradient = new ColorGradient();
-//  * gradient.add(new gloperate.Color([0.09, 0.43, 0.58]), 0.2);
-//  * gradient.add(new gloperate.Color([0.97, 0.98, 0.98]), 0.8);
-//  * ...
-//  * gradient.color(0.66).rgb; // [0.7646666765213013, 0.8516666889190674, 0.8866666555404663]
-//  * gradient.lerpSpace = ColorGradient.LerpSpace.LAB;
-//  * gradient.color(0.66).rgb; // [0.8264121413230896, 0.8263672590255737, 0.8262822031974792]
-//  * ```
-//  */
+/**
+ * Basic color gradient representation that uses color stops, a color at a specific position, to allow for color
+   queries
+ * at arbitrary positions. The gradient provides {@link Color} instances to facilitate the use of various color
+   spaces.
+ * ```
+ * const gradient = new ColorGradient();
+ * gradient.add(new gloperate.Color([0.09, 0.43, 0.58]), 0.2);
+ * gradient.add(new gloperate.Color([0.97, 0.98, 0.98]), 0.8);
+ * ...
+ * gradient.color(0.66).rgb; // [0.7646666765213013, 0.8516666889190674, 0.8866666555404663]
+ * gradient.lerpSpace = ColorGradient.LerpSpace.LAB;
+ * gradient.color(0.66).rgb; // [0.8264121413230896, 0.8263672590255737, 0.8262822031974792]
+ * ```
+ */
 export class ColorScale {
 
     /** @see{@link hint} */

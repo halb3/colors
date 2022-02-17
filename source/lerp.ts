@@ -1,7 +1,7 @@
 
 /* spellchecker: disable */
 
-import { vec4, mix } from 'haeley-math';
+import { vec4, mix } from '@haeley/math';
 
 import { Color, Space } from './color';
 
