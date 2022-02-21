@@ -2,35 +2,15 @@
 
 /* spellchecker: disable */
 
-import { vec2, vec3, mat4, GLclampf3 } from '@haeley/math';
-import { Color } from '.';
+import { vec2, vec3, GLclampf3, GLclampf4 } from '@haeley/math';
 
-import { rgb2srgb, srgb2rgb } from './conversion';
+import {
+    rgb2srgb, srgb2rgb, srgba2rgba, srgb2xyz, xyz2srgb,
+    DEFAULT_GAMMA, D65
+} from './conversion';
 
 /* spellchecker: enable */
 
-export enum ColorVisionDeficiency {
-    None,
-    Protanope,    // reds are greatly reduced   (1% men)
-    Deuteranope,  // greens are greatly reduced (1% men)
-    Tritanope     // blues are greatly reduced  (0.003% population)
-};
-
-// D65 white point xyz coords http://en.wikipedia.org/wiki/Standard_illuminant
-const D65 = vec3.fromValues(0.312713, 0.329016, 0.358271);
-
-// sRGB to/from XYZ for D65 http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
-const sRGB2XYZ = mat4.fromValues(
-    0.4124564, 0.3575761, 0.1804375, 0.0,
-    0.2126729, 0.7151522, 0.0721750, 0.0,
-    0.0193339, 0.1191920, 0.9503041, 0.0,
-    0.0000000, 0.0000000, 0.0000000, 1.0);
-
-const XYZ2sRGB = mat4.fromValues(
-    3.2404542, -1.5371385, -0.4985314, 0.0,
-    -0.9692660, 1.8760108, 0.0415560, 0.0,
-    0.0556434, -0.2040259, 1.0572252, 0.0,
-    0.0000000, 0.0000000, 0.0000000, 1.0);
 
 /**
  * "Daltonization is a procedure for adapting colors ... for improving
@@ -45,8 +25,9 @@ const XYZ2sRGB = mat4.fromValues(
  * The color_blind_sims() JavaScript function in the is copyright(c) 2000-2001
  * by Matthew Wickline and the Human-Computer Interaction Resource Network (http://hcirn.com)
  */
-export function daltonize(rgb: GLclampf3, deficiency: ColorVisionDeficiency, gamma: GLclampf = DEFAULT_GAMMA): GLclampf3 {
+export function daltonize(rgb: GLclampf3 | GLclampf4, deficiency: ColorVisionDeficiency, gamma: GLclampf = DEFAULT_GAMMA): GLclampf3 | GLclampf4 {
 
+    const returnAlpha = rgb.length === 4;
     let CIED: CIEDeficiency;
     switch (deficiency) {
         case ColorVisionDeficiency.Protanope:
@@ -59,18 +40,17 @@ export function daltonize(rgb: GLclampf3, deficiency: ColorVisionDeficiency, gam
             CIED = new CIEDeficiency([+0.171, -0.003], [0.045391, 0.294976], [0.665764, 0.334011]);
             break;
         case ColorVisionDeficiency.None:
-        default:
-            return [rgb[0], rgb[1], rgb[2]];
+            return returnAlpha ? [rgb[0], rgb[1], rgb[2], rgb[3]] : [rgb[0], rgb[1], rgb[2]];
     }
 
-    const crgb = rgb2srgb(rgb);
-    const cxyz = vec3.transformMat4(vec3.create(), crgb, sRGB2XYZ);
+    const crgb = rgb2srgb([rgb[0], rgb[1], rgb[2]], gamma);
+    const cxyz = srgb2xyz(crgb);
     const csum = 1.0 / (cxyz[0] + cxyz[1] + cxyz[2]);
 
     const cuvY = vec3.fromValues(cxyz[0] * csum, cxyz[1] * csum, 0.0);
 
     // find neutral grey at this luminosity
-    let nxyz = vec3.fromValues(D65[0], 0.0, D65[2]);
+    const nxyz = vec3.fromValues(D65[0], 0.0, D65[2]);
     vec3.scale(nxyz, nxyz, cxyz[1] / D65[1]);
 
     // retrieve confusion line between color and the deficiency confusion point
@@ -83,7 +63,7 @@ export function daltonize(rgb: GLclampf3, deficiency: ColorVisionDeficiency, gam
     const clyi = cuvY[1] - cuvY[0] * clm;
 
     // find the change in the u and v dimensions (no Y change)
-    let duvY = vec3.create();
+    const duvY = vec3.create();
     duvY[0] = (CIED.clyi - clyi) / (clm - CIED.clm);
     duvY[1] = (clm * duvY[0]) + clyi;
 
@@ -91,14 +71,13 @@ export function daltonize(rgb: GLclampf3, deficiency: ColorVisionDeficiency, gam
     const sxyz = vec3.fromValues(duvY[0] * cxyz[1] / duvY[1], cxyz[1],
         (1.0 - (duvY[0] + duvY[1])) * cxyz[1] / duvY[1]);
 
-    const srgb = vec3.transformMat4(vec3.create(), sxyz, XYZ2sRGB);
+    const srgb = xyz2srgb([sxyz[0], sxyz[1], sxyz[2]]);
 
     // note the RGB differences between sim color and our neutral color
-    const drgb = vec3.transformMat4(vec3.create(),
-        [nxyz[0] - sxyz[0], 0.0, nxyz[2] - sxyz[2]], XYZ2sRGB);
+    const drgb = xyz2srgb([nxyz[0] - sxyz[0], 0.0, nxyz[2] - sxyz[2]]);
 
     // find out how much to shift sim color toward neutral to fit in RGB space
-    let argb = vec3.create();
+    const argb = vec3.create();
     argb[0] = drgb[0] ? ((srgb[0] < 0 ? 0.0 : 1.0) - srgb[0]) / drgb[0] : 0.0;
     argb[0] = drgb[1] ? ((srgb[1] < 0 ? 0.0 : 1.0) - srgb[1]) / drgb[1] : 0.0;
     argb[0] = drgb[2] ? ((srgb[2] < 0 ? 0.0 : 1.0) - srgb[2]) / drgb[2] : 0.0;
@@ -114,9 +93,17 @@ export function daltonize(rgb: GLclampf3, deficiency: ColorVisionDeficiency, gam
 
     // vec3.clamp(srgb, srgb, [0.0, 0.0, 0.0], [1.0, 1.0, 1.0]);
 
-    return srgb2rgb([srgb[0], srgb[1], srgb[2]], gamma);
-};
+    return returnAlpha ? srgba2rgba([srgb[0], srgb[1], srgb[2], rgb[3]], gamma) :
+        srgb2rgb([srgb[0], srgb[1], srgb[2]], gamma);
+}
 
+
+export enum ColorVisionDeficiency {
+    None,
+    Protanope,    // reds are greatly reduced   (1% men)
+    Deuteranope,  // greens are greatly reduced (1% men)
+    Tritanope     // blues are greatly reduced  (0.003% population)
+}
 
 
 class CIEDeficiency {
@@ -133,7 +120,6 @@ class CIEDeficiency {
     public dcp: vec2;
     public begin: vec2;
     public end: vec2;
-
 
     constructor(dcp: vec2, begin: vec2, end: vec2) {
 

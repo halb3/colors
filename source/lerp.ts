@@ -3,7 +3,9 @@
 
 import { vec4, mix } from '@haeley/math';
 
-import { Color, Space } from './color';
+import { Color } from './color';
+import { ColorSpace } from './encoding';
+
 
 /* spellchecker: enable */
 
@@ -15,7 +17,7 @@ import { Color, Space } from './color';
  * @param a - Specify the value to use to interpolate between x and y.
  * @param space - The color space that is to be used for linear interpolation of two colors.
  */
-export function lerp(x: Color, y: Color, a: number, space: Space = Space.LAB): Color {
+export function lerp(x: Color, y: Color, a: number, space: ColorSpace = ColorSpace.lab): Color {
 
     if (a <= 0.0) {
         return new Color(x.rgba);
@@ -26,21 +28,21 @@ export function lerp(x: Color, y: Color, a: number, space: Space = Space.LAB): C
     const result = vec4.create();
     // eslint-disable-next-line default-case
     switch (space) {
-        case Space.CMYK: {
+        case ColorSpace.cmyk: {
             vec4.lerp(result, x.cmyk, y.cmyk, a);
             const alpha = mix(x.a, y.a, a);
             return new Color().fromCMYK(result[0], result[1], result[2], result[3], alpha);
         }
 
-        case Space.LAB:
+        case ColorSpace.lab:
             vec4.lerp(result, x.laba, y.laba, a);
             return new Color().fromLAB(result[0], result[1], result[2], result[3]);
 
-        case Space.HSL:
+        case ColorSpace.hsl:
             vec4.lerp(result, x.hsla, y.hsla, a);
             return new Color().fromHSL(result[0], result[1], result[2], result[3]);
 
-        case Space.RGB:
+        case ColorSpace.rgb:
             vec4.lerp(result, x.rgba, y.rgba, a);
             return new Color().fromRGB(result[0], result[1], result[2], result[3]);
     }

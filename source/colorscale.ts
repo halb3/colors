@@ -4,10 +4,14 @@
 import { assert, fetchJsonAsync, jsonschema } from '@haeley/auxiliaries';
 import { clamp } from '@haeley/math';
 
-import { Color, Space } from './color';
+import { ColorSpace, getEncodingFromSpace } from './encoding';
+import { ColorVisionDeficiency, daltonize } from './daltonize';
+import { DEFAULT_GAMMA } from './conversion';
+import { Color } from './color';
 import { lerp } from './lerp';
 
 import PresetsSchema from './colorscalepresets.schema.json';
+import { ColorTuple } from '.';
 
 /* spellchecker: enable */
 
@@ -37,6 +41,12 @@ export class ColorScale {
 
     /** @see{@link invert} */
     protected _inverted = false;
+
+    /** @see{@link deficiency} */
+    protected _deficiency = ColorVisionDeficiency.None;
+
+    /** @see{@link gamma} */
+    protected _gamma = DEFAULT_GAMMA;
 
     static readonly PresetSchema: jsonschema.Schema = PresetsSchema;
 
@@ -229,7 +239,7 @@ export class ColorScale {
                 break;
             }
             const a = (position - positions[lower]) / (positions[upper] - positions[lower]);
-            scale._colors.push(lerp(colors[lower], colors[upper], a, Space.LAB));
+            scale._colors.push(lerp(colors[lower], colors[upper], a, ColorSpace.lab));
         }
         return scale;
     }
@@ -244,7 +254,7 @@ export class ColorScale {
      * @param space - The color space that is to be used for linear interpolation of two colors.
      * @returns - Color, depending on the gradient type either linearly or nearest filtered color.
      */
-    lerp(position: number, space: Space = Space.LAB): Color | undefined {
+    lerp(position: number, space: ColorSpace = ColorSpace.lab): Color | undefined {
 
         if (this._colors.length === 0) {
             return undefined;
@@ -337,24 +347,53 @@ export class ColorScale {
         this._inverted = !this._inverted;
     }
 
+    /**
+     * Returns the color-vision-deficiency transformation.
+     */
+    get deficiency(): ColorVisionDeficiency {
+        return this._deficiency;
+    }
+    set deficiency(deficiency: ColorVisionDeficiency) {
+        this._deficiency = deficiency;
+    }
+
+    /**
+    * Returns the gamma value used for the set color-vision-deficiency transformation.
+    */
+    get gamma(): GLclampf {
+        return this._gamma;
+    }
+    set gamma(gamma: GLclampf) {
+        this._gamma = gamma;
+    }
+
 
     /**
      * Converts the color scale into an array of interleaved unsigned int values of the requested color space.
      * @param space - Color space that is to be used for the array.
-     * @param alpha - Whether or not alpha is to be included.
      */
-    bitsUI8(space: Space = Space.RGB, alpha: boolean = true): Uint8ClampedArray {
+    bitsUI8(space: ColorSpace = ColorSpace.rgb, alpha: boolean = false): Uint8ClampedArray {
         const size = this._colors.length;
         const stride = alpha ? 4 : 3;
         const bits = new Uint8ClampedArray(size * stride);
+        const encoding = getEncodingFromSpace(space, space !== ColorSpace.cmyk && alpha);
 
+        let color: Color;
+        let tuple: ColorTuple;
         for (let i = 0; i < size; ++i) {
-            const color = this._colors[i].tuple(space, alpha);
-            bits[i * stride + 0] = color[0] * 255;
-            bits[i * stride + 1] = color[1] * 255;
-            bits[i * stride + 2] = color[2] * 255;
-            if (alpha && color.length === 4) {
-                bits[i * stride + 3] = color[3] * 255;
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            color = Color.clone(this.color(i)!);
+            if (this._deficiency !== ColorVisionDeficiency.None) {
+                tuple = daltonize(color.rgb, this._deficiency, this._gamma);
+                color.fromRGB(tuple[0], tuple[1], tuple[2], color.a);
+            }
+            tuple = color.tuple(encoding);
+
+            bits[i * stride + 0] = tuple[0] * 255;
+            bits[i * stride + 1] = tuple[1] * 255;
+            bits[i * stride + 2] = tuple[2] * 255;
+            if (tuple.length === 4) {
+                bits[i * stride + 3] = tuple[3] * 255;
             }
         }
         return bits;
@@ -362,21 +401,31 @@ export class ColorScale {
 
     /**
      * Converts the color scale into an array of interleaved float values of the requested color space.
-     * @param space - Color space that is to be used for the array.
-     * @param alpha - Whether or not alpha is to be included.
+     * Note, that CMYK encoding will ignore the alpha channel.
+     * @param space - Color encoding that is to be used for the array.
      */
-    bitsF32(space: Space = Space.RGB, alpha: boolean = true): Float32Array {
+    bitsF32(space: ColorSpace = ColorSpace.rgb, alpha: boolean = false): Float32Array {
         const size = this._colors.length;
         const stride = alpha ? 4 : 3;
         const bits = new Float32Array(size * stride);
+        const encoding = getEncodingFromSpace(space, space !== ColorSpace.cmyk && alpha);
 
+        let color: Color;
+        let tuple: ColorTuple;
         for (let i = 0; i < size; ++i) {
-            const color = this._colors[i].tuple(space, alpha);
-            bits[i * stride + 0] = color[0];
-            bits[i * stride + 1] = color[1];
-            bits[i * stride + 2] = color[2];
-            if (alpha && color.length === 4) {
-                bits[i * stride + 3] = color[3];
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            color = Color.clone(this.color(i)!);
+            if (this._deficiency !== ColorVisionDeficiency.None) {
+                tuple = daltonize(color.rgb, this._deficiency, this._gamma);
+                color.fromRGB(tuple[0], tuple[1], tuple[2], color.a);
+            }
+            tuple = color.tuple(encoding);
+
+            bits[i * stride + 0] = tuple[0];
+            bits[i * stride + 1] = tuple[1];
+            bits[i * stride + 2] = tuple[2];
+            if (tuple.length === 4) {
+                bits[i * stride + 3] = tuple[3];
             }
         }
         return bits;

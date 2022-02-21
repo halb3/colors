@@ -4,8 +4,10 @@
 
 export * from './about';
 
-export * from './conversion';
+export * from './encoding';
 export * from './lerp';
+export * from './conversion';
+export * from './grayscale';
 export * from './daltonize';
 
 export * from './color';

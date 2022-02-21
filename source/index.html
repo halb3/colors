@@ -120,7 +120,6 @@
                 </div>
 
                 <p class="mb-1">Color input methods:</p>
-                <pre class="bg-light px-3 py-2 border-start" id="pre-color-string"></pre>
                 <div class="row g-2 mb-2">
                     <div class="col-4">
                         <div class="form-floating">
@@ -162,6 +161,23 @@
                             <label for="text-hex"><code>fromHex =</code></label>
                         </div>
                     </div>
+                </div>
+                <div class="row g-2">
+                    <div class="col-3">
+                        <div class="input-group mb-3">
+                            <span class="input-group-text">Alpha:</span>
+                            <input type="number" class="form-control" id="number-alpha" step="0.01" min="0.0" max="1.0"
+                                value="1.0">
+                        </div>
+                    </div>
+
+                    <div class="col-3">
+                        <div class="input-group mb-3">
+                            <span class="input-group-text">Gamma:</span>
+                            <input type="number" class="form-control" id="number-gamma" step="0.1" min="1.0" max="3.0"
+                                value="2.2">
+                        </div>
+                    </div>
 
                     <div class="col-auto">
                         <div class="form-floating">
@@ -170,11 +186,11 @@
                     </div>
                     <div class="col-auto">
                         <div class="form-floating">
-                            <button type="button" class="btn btn-secondary" id="btn-pickr">Pick Color (using
-                                @simonwep/pickr)</button>
+                            <button type="button" class="btn btn-secondary" id="btn-pickr">Pick Color</button>
                         </div>
                     </div>
 
+                    <pre class="bg-light px-3 py-2 border-start" id="pre-color-string"></pre>
                 </div>
 
             </div>
@@ -189,6 +205,33 @@
                     <code>mikhailov.json</code>, and <code>smithwalt.json</code>.
                 </p>
 
+                <div class="row g-2 mb-2 text-al">
+
+                    <div class="col">
+                        <div class="input-group mb-3">
+                            <span class="input-group-text">Color-Vision-Deficiency:</span>
+                            <select class="form-select" id="scales-daltonize"
+                                aria-label="Floating label select example">
+                                <option value="0" selected>None</option>
+                                <option value="1">Protanope
+                                    (reds are greatly reduced, 1% men)</option>
+                                <option value="2">Deuteranope
+                                    (greens are greatly reduced, 1% men)</option>
+                                <option value="3">Tritanope
+                                    (blues are greatly reduced, 0.003% population) </option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-3">
+                        <div class="input-group mb-3">
+                            <span class="input-group-text">Gamma:</span>
+                            <input type="number" class="form-control" id="scales-gamma" step="0.1" min="1.0" max="3.0"
+                                value="2.2">
+                        </div>
+                    </div>
+
+                </div>
 
                 <table class="table caption-top small">
                     <caption>Test: fetch scales from json files:</caption>
@@ -251,15 +294,25 @@
             const preString = document.getElementById(`pre-color-string`);
 
             const color0 = document.getElementById(`color-0`);
+            const context0 = color0.getContext('2d');
             const color1 = document.getElementById(`color-1`);
+            const context1 = color1.getContext('2d');
             const color2 = document.getElementById(`color-2`);
+            const context2 = color2.getContext('2d');
             const color3 = document.getElementById(`color-3`);
+            const context3 = color3.getContext('2d');
             const color4 = document.getElementById(`color-4`);
+            const context4 = color4.getContext('2d');
             const color5 = document.getElementById(`color-5`);
+            const context5 = color5.getContext('2d');
             const color6 = document.getElementById(`color-6`);
+            const context6 = color6.getContext('2d');
             const color7 = document.getElementById(`color-7`);
+            const context7 = color7.getContext('2d');
             const color8 = document.getElementById(`color-8`);
+            const context8 = color8.getContext('2d');
             const color9 = document.getElementById(`color-9`);
+            const context9 = color9.getContext('2d');
 
             const textF32 = document.getElementById(`text-f32`);
             const textUI8 = document.getElementById(`text-ui8`);
@@ -268,6 +321,9 @@
             const textCMYK = document.getElementById(`text-cmyk`);
             const textHex = document.getElementById(`text-hex`);
 
+            const numberAlpha = document.getElementById(`number-alpha`);
+            const numberGamma = document.getElementById(`number-gamma`);
+
             const invalidate = (element, valid) => {
                 element.classList.remove(valid ? 'is-invalid' : 'is-valid');
                 element.classList.add(valid ? 'is-valid' : 'is-invalid');
@@ -275,9 +331,10 @@
 
             const rgb2hex = haeley.colors.rgb2hex;
             const daltonize = haeley.colors.daltonize;
+            const grayscale = haeley.colors.grayscale;
 
             let gamma = haeley.colors.DEFAULT_GAMMA;
-            let test = haeley.colors.Color.random();
+            let test = haeley.colors.Color.random(false);
 
             const pickr = Pickr.create({
                 el: '#btn-pickr',
@@ -285,71 +342,77 @@
                 theme: 'monolith',
                 components: {
                     preview: false,
-                    opacity: false,
+                    opacity: true,
                     hue: true,
                 }
             });
+            pickr.setColorRepresentation('RGBA');
 
-            const updateColor = (color) => {
-                console.log(2, color.a);
-                // color.a = 1.0;
-                pickr.setColor(rgb2hex(color.rgb));
+            const updateColorCanvas = (canvas, context, color) => {
+                context.fillStyle = haeley.colors.rgba2hex(color);
+                context.clearRect(0, 0, canvas.width, canvas.height);
+                context.fillRect(0, 0, canvas.width, canvas.height);
+            };
 
-                color0.style.backgroundColor = rgb2hex(color.rgb);
-                color1.style.backgroundColor = rgb2hex(color.srgb(gamma));
+            const updateColor = (color, updatePickr = true) => {
 
-                color2.style.backgroundColor = rgb2hex(daltonize(color.rgb,
+                if (updatePickr) {
+                    pickr.setColor(color.toString('RGBa', 4, 'rgba'));
+                }
+
+                updateColorCanvas(color0, context0, color.rgba);
+                updateColorCanvas(color1, context1, color.srgba(gamma));
+                updateColorCanvas(color2, context2, daltonize(color.rgba,
                     haeley.colors.ColorVisionDeficiency.Protanope, gamma));
-                color3.style.backgroundColor = rgb2hex(daltonize(color.rgb,
+                updateColorCanvas(color3, context3, daltonize(color.rgba,
                     haeley.colors.ColorVisionDeficiency.Deuteranope, gamma));
-                color4.style.backgroundColor = rgb2hex(daltonize(color.rgb,
+                updateColorCanvas(color4, context4, daltonize(color.rgba,
                     haeley.colors.ColorVisionDeficiency.Tritanope, gamma));
 
-                let gray;
 
-                gray = color.gray(haeley.colors.GrayscaleAlgorithm.LinearLuminance);
-                color5.style.backgroundColor = rgb2hex([gray, gray, gray]);
-                gray = color.gray(haeley.colors.GrayscaleAlgorithm.Average);
-                color6.style.backgroundColor = rgb2hex([gray, gray, gray]);
-                gray = color.gray(haeley.colors.GrayscaleAlgorithm.LeastSaturatedVariant);
-                color7.style.backgroundColor = rgb2hex([gray, gray, gray]);
-                gray = color.gray(haeley.colors.GrayscaleAlgorithm.MinimumDecomposition);
-                color8.style.backgroundColor = rgb2hex([gray, gray, gray]);
-                gray = color.gray(haeley.colors.GrayscaleAlgorithm.MaximumDecomposition);
-                color9.style.backgroundColor = rgb2hex([gray, gray, gray]);
+                updateColorCanvas(color5, context5, grayscale(color.rgba,
+                    haeley.colors.GrayscaleAlgorithm.LinearLuminance));
+                updateColorCanvas(color6, context6, grayscale(color.rgba,
+                    haeley.colors.GrayscaleAlgorithm.Average));
+                updateColorCanvas(color7, context7, grayscale(color.rgba,
+                    haeley.colors.GrayscaleAlgorithm.LeastSaturatedVariant));
+                updateColorCanvas(color8, context8, grayscale(color.rgba,
+                    haeley.colors.GrayscaleAlgorithm.MinimumDecomposition));
+                updateColorCanvas(color9, context9, grayscale(color.rgba,
+                    haeley.colors.GrayscaleAlgorithm.MaximumDecomposition));
 
-                textF32.value = color.rgb.map((v) => v.toFixed(4)).join(', ');
+                textF32.value = color.rgb.map((v) => v.toFixed(3)).join(', ');
                 textUI8.value = color.rgbUI8.map((v) => v.toFixed(0)).join(', ');
-                textHSL.value = color.hsl.map((v) => v.toFixed(4)).join(', ');
-                textLAB.value = color.lab.map((v) => v.toFixed(4)).join(', ');
+                textHSL.value = color.hsl.map((v) => v.toFixed(3)).join(', ');
+                textLAB.value = color.lab.map((v) => v.toFixed(3)).join(', ');
                 textCMYK.value = color.cmyk.map((v) => v.toFixed(2)).join(', ');
                 textHex.value = color.hexRGB;
+                numberAlpha.value = color.a.toFixed(2);
 
-                console.log(color.serialize());
                 preString.innerHTML =
                     `// example code using the Color class:
 const colors = new Array<Color>(8);
-colors[0] = new Color([${color.rgb.map((x) => x.toFixed(4)).join(', ')}], 1.0);
+colors[0] = new Color([${color.rgb.map((x) => x.toFixed(4)).join(', ')}], ${color.a.toFixed(4)});
 colors[1] = new Color([${color.rgba.map((x) => x.toFixed(4)).join(', ')}]);
 colors[2] = new Color('${color.toString('laba')}');
-colors[3] = new Color('${color.toString('RGB')}');
+colors[3] = new Color('${color.toString('RGBA')}');
 colors[4] = new Color('${color.toString('hex')}');
 colors[5] = new Color();
-colors[5].fromString('${color.toString('cmyk')}');
+colors[5].fromString('${color.toString('cmyka')}');
 colors[6] = new Color();
 colors[6].fromString('${color.toString('rgba')}');
 colors[7] = Color.random();`;
             }
 
             document.getElementById(`btn-rand`).onclick = event => {
-                test = haeley.colors.Color.random();
-                console.log(1, test.a);
+                test = haeley.colors.Color.random(false);
                 updateColor(test);
             }
 
             pickr.on('change', (color, source, instance) => {
                 const rgba = color.toRGBA();
-                updateColor(test.fromUI8(rgba[0], rgba[1], rgba[2], rgba[3]));
+                rgba[3] *= 255; // some issue with alpha representation when not used
+                updateColor(test.fromUI8(rgba[0], rgba[1], rgba[2], rgba[3]), false);
             });
 
             textF32.onchange = () => {
@@ -376,12 +439,14 @@ colors[7] = Color.random();`;
                 test.fromString(textHex.value);
                 updateColor(test);
             }
-            // document.getElementById(`btn-pickr`).onclick = event => {
-
-
-
-            // }
-
+            numberAlpha.onchange = () => {
+                test.a = numberAlpha.value;
+                updateColor(test);
+            }
+            numberGamma.onchange = () => {
+                gamma = numberGamma.value;
+                updateColor(test, false);
+            }
 
             updateColor(test);
         }
@@ -389,7 +454,7 @@ colors[7] = Color.random();`;
         { // Color Scales from Presets
 
             const presets = [
-                ['smithwalt', 'viridis', 1, false],
+                ['smithwalt', 'viridis', 7, false],
                 ['smithwalt', 'viridis', 64, false],
                 ['smithwalt', 'inferno', 7, false],
                 ['smithwalt', 'inferno', 64, false],
@@ -425,7 +490,33 @@ colors[7] = Color.random();`;
                 ['colorbrewer', 'Dark2', 7, false]
             ];
 
-            var tbody = document.getElementById('scales');
+            const tbody = document.getElementById('scales');
+            const scalesDaltonize = document.getElementById('scales-daltonize');
+            const scalesGamma = document.getElementById('scales-gamma');
+
+            const scales = new Array(presets.length);
+
+            const updateScale = (index) => {
+                const scale = scales[index];
+                scale.deficiency = parseInt(scalesDaltonize.value, 10);
+                scale.gamma = scalesGamma.value;
+
+                const canvas = document.getElementById(`scale-${index}`);
+                const context = canvas.getContext('2d');
+
+                if (canvas.width !== scale.length) {
+                    canvas.width = scale.length;
+                }
+                if (canvas.height !== 1) {
+                    canvas.height = 1;
+                }
+
+                const image = new ImageData(scale.bitsUI8('rgb', true), Math.max(2, scale.length), 1);
+                context.putImageData(image, 0, 0);
+            };
+
+            const updateScales = () => scales.forEach((scale, index) => updateScale(index));
+            scalesDaltonize.onchange = scalesGamma.onchange = updateScales;
 
             presets.forEach((value, index) => {
 
@@ -441,21 +532,14 @@ colors[7] = Color.random();`;
                     `<td><canvas class="scale" id="scale-${index}"></canvas></td>` +
                     `</tr>`);
 
-                haeley.colors.ColorScale.fromPreset(file, preset, stepCount).then(
+                scales[index] = haeley.colors.ColorScale.fromPreset(file, preset, stepCount).then(
                     (scale) => {
-                        const canvas = document.getElementById(`scale-${index}`);
-                        const context = canvas.getContext('2d');
-
-                        canvas.width = stepCount;
-                        canvas.height = 1;
                         if (invert) {
                             scale.invert();
                         }
-
-                        const image = new ImageData(scale.bitsUI8(), Math.max(2, stepCount), 1);
-                        context.putImageData(image, 0, 0);
+                        scales[index] = scale;
+                        updateScale(index);
                     });
-
             });
 
         }
@@ -489,6 +573,10 @@ colors[7] = Color.random();`;
         image-rendering: pixelated;
         height: 4rem;
         width: 100%;
+
+        background: repeating-conic-gradient(lightgray 0% 25%, white 0% 50%);
+        background-size: 16px 16px;
+        background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
     }
 </style>
 

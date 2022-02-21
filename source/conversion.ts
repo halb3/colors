@@ -3,7 +3,8 @@
 
 import { assert, log, LogLevel } from '@haeley/auxiliaries';
 import {
-    clampf3, clampf4, GLclampf3, GLclampf4
+    GLclampf3, GLclampf4, vec3, mat3,
+    clampf3, duplicate3, duplicate4
 } from '@haeley/math';
 
 import { Color } from './color';
@@ -53,7 +54,7 @@ export function to2CharHexCode(value: number): string {
  * @returns - RGB color tuple: red, green, and blue, each in [0.0, 1.0].
  */
 export function hsl2rgb(hsl: GLclampf3): GLclampf3 {
-    const hslF = clampf3(hsl, 'HSL input');
+    const hslF = duplicate3(hsl);
 
     if (hslF[1] === 0.0) {
         return [hslF[2], hslF[2], hslF[2]];
@@ -72,7 +73,7 @@ export function hsl2rgb(hsl: GLclampf3): GLclampf3 {
  * @returns - HSL color tuple: hue, saturation, and lightness, each in [0.0, 1.0].
  */
 export function rgb2hsl(rgb: GLclampf3): GLclampf3 {
-    const rgbF = clampf3(rgb, 'RGB input');
+    const rgbF = duplicate3(rgb);
     const hsl: GLclampf3 = [0.0, 0.0, 0.0];
 
     const min = Math.min(rgbF[0], rgbF[1], rgbF[2]);
@@ -107,7 +108,7 @@ export function rgb2hsl(rgb: GLclampf3): GLclampf3 {
  * @returns - XYZ color tuple: x, y, and z, each in [0.0, 1.0].
  */
 export function lab2xyz(lab: GLclampf3): GLclampf3 {
-    const labF = clampf3(lab, 'LAB input');
+    const labF = duplicate3(lab);
 
     /** The following computation assumes the value ranges:
      *  L: [0, 100], a: [-128, 127], b: [-128, 127]
@@ -184,7 +185,7 @@ export function xyz2rgb(xyz: GLclampf3): GLclampf3 {
  * @returns - XYZ color tuple: x, y, and z, each in [0.0, 1.0].
  */
 export function rgb2xyz(rgb: GLclampf3): GLclampf3 {
-    const rgbF = clampf3(rgb, 'RGB input');
+    const rgbF = duplicate3(rgb);
 
     const r = Math.pow(rgbF[0], 2.19921875);
     const g = Math.pow(rgbF[1], 2.19921875);
@@ -222,7 +223,7 @@ export function rgb2lab(rgb: GLclampf3): GLclampf3 {
  * @returns - RGB color tuple: red, green, and blue, each in [0.0, 1.0]
  */
 export function cmyk2rgb(cmyk: GLclampf4): GLclampf3 {
-    const cmykF = clampf4(cmyk, 'CMYK input');
+    const cmykF = duplicate4(cmyk);
 
     const k = 1.0 - cmykF[3];
     return [(1.0 - cmykF[0]) * k, (1.0 - cmykF[1]) * k, (1.0 - cmykF[2]) * k];
@@ -234,7 +235,7 @@ export function cmyk2rgb(cmyk: GLclampf4): GLclampf3 {
  * @returns - CMYK color tuple: cyan, magenta, yellow, and key, each in [0.0, 1.0].
  */
 export function rgb2cmyk(rgb: GLclampf3): GLclampf4 {
-    const rgbF = clampf3(rgb, 'RGB input');
+    const rgbF = duplicate3(rgb);
 
     const k1 = 1.0 - Math.max(rgbF[0], rgbF[1], rgbF[2]);
     const k2 = 1.0 - k1;
@@ -282,7 +283,7 @@ export function hex2rgba(hex: string): GLclampf4 {
  * @returns - Hexadecimal color string: red, green, and blue, each in ['00', 'ff'], with '#' prefix
  */
 export function rgb2hex(rgb: GLclampf3): string {
-    const rgbF = clampf3(rgb, 'RGB input');
+    const rgbF = duplicate3(rgb);
 
     const r = to2CharHexCode(rgbF[0]);
     const g = to2CharHexCode(rgbF[1]);
@@ -296,7 +297,7 @@ export function rgb2hex(rgb: GLclampf3): string {
  * @returns - Hexadecimal color string: red, green, blue, and alpha, each in ['00', 'ff'], with '#' prefix
  */
 export function rgba2hex(rgba: GLclampf4): string {
-    const rgbaF = clampf4(rgba, 'RGBA input');
+    const rgbaF = duplicate4(rgba);
 
     const r = to2CharHexCode(rgbaF[0]);
     const g = to2CharHexCode(rgbaF[1]);
@@ -314,7 +315,7 @@ export const DEFAULT_GAMMA: GLclampf = 2.2;
  * @returns - Gamma corrected srgb values
  */
 export function rgb2srgb(rgb: GLclampf3, gamma: GLclampf = DEFAULT_GAMMA): GLclampf3 {
-    const srgb = clampf3(rgb, 'RGB input');
+    const srgb = duplicate3(rgb);
 
     srgb[0] = Math.pow(srgb[0], gamma);
     srgb[1] = Math.pow(srgb[1], gamma);
@@ -324,12 +325,27 @@ export function rgb2srgb(rgb: GLclampf3, gamma: GLclampf = DEFAULT_GAMMA): GLcla
 }
 
 /**
+ * Applies basic gamma correction to normalized rgba float values.
+ * @param rgba - RGB color tuple: red, green, blue, and alpha each in [0.0, 1.0]
+ * @returns - Gamma corrected srgba values
+ */
+export function rgba2srgba(rgba: GLclampf4, gamma: GLclampf = DEFAULT_GAMMA): GLclampf4 {
+    const srgba = duplicate4(rgba);
+
+    srgba[0] = Math.pow(srgba[0], gamma);
+    srgba[1] = Math.pow(srgba[1], gamma);
+    srgba[2] = Math.pow(srgba[2], gamma);
+
+    return srgba;
+}
+
+/**
  * Reverses basic gamma correction to normalized, gamma-corrected srgb float values.
  * @param rgb - RGB color tuple: red, green, and blue, each in [0.0, 1.0]
  * @returns - Gamma 'reverted' rgb values
  */
 export function srgb2rgb(srgb: GLclampf3, gamma: GLclampf = DEFAULT_GAMMA): GLclampf3 {
-    const rgb = clampf3(srgb, 'RGB input');
+    const rgb = duplicate3(srgb);
 
     const oneOverGamma = 1.0 / gamma;
     rgb[0] = Math.pow(rgb[0], oneOverGamma);
@@ -337,4 +353,48 @@ export function srgb2rgb(srgb: GLclampf3, gamma: GLclampf = DEFAULT_GAMMA): GLcl
     rgb[2] = Math.pow(rgb[2], oneOverGamma);
 
     return rgb;
+}
+
+/**
+ * Reverses basic gamma correction to normalized, gamma-corrected srgba float values.
+ * @param rgba - RGBA color tuple: red, green, blue, and alpha each in [0.0, 1.0]
+ * @returns - Gamma 'reverted' rgba values
+ */
+export function srgba2rgba(srgba: GLclampf4, gamma: GLclampf = DEFAULT_GAMMA): GLclampf4 {
+    const rgba = duplicate4(srgba);
+
+    const oneOverGamma = 1.0 / gamma;
+    rgba[0] = Math.pow(rgba[0], oneOverGamma);
+    rgba[1] = Math.pow(rgba[1], oneOverGamma);
+    rgba[2] = Math.pow(rgba[2], oneOverGamma);
+
+    return rgba;
+}
+
+
+// D65 white point xyz coords http://en.wikipedia.org/wiki/Standard_illuminant
+export const D65: GLclampf3 = [0.312713, 0.329016, 0.358271];
+
+const sRGB2XYZ = mat3.transpose(mat3.create(), [
+    0.4124564, 0.3575761, 0.1804375,
+    0.2126729, 0.7151522, 0.0721750,
+    0.0193339, 0.1191920, 0.9503041]);
+
+const XYZ2sRGB = mat3.transpose(mat3.create(), [
+    3.2404542, -1.5371385, -0.4985314,
+    -0.9692660, 1.8760108, 0.0415560,
+    0.0556434, -0.2040259, 1.0572252]);
+
+// sRGB to XYZ for D65 http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
+export function srgb2xyz(srgb: GLclampf3): GLclampf3 {
+    const xyz = duplicate3(srgb);
+    vec3.transformMat3(xyz, xyz, sRGB2XYZ);
+    return xyz;
+}
+
+// XYZ to sRGB for D65 http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
+export function xyz2srgb(xyz: GLclampf3): GLclampf3 {
+    const srgb = duplicate3(xyz);
+    vec3.transformMat3(srgb, srgb, XYZ2sRGB);
+    return xyz;
 }

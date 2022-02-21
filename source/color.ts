@@ -6,9 +6,10 @@ import {
     clamp, clampf, clampf4, duplicate4, equals4, GLclampf3, GLclampf4, GLclampf5
 } from '@haeley/math';
 
+import { ColorTuple, ColorEncoding } from './encoding';
 import {
     cmyk2rgb, hex2rgba, hsl2rgb, lab2rgb,
-    rgb2cmyk, rgb2hex, rgb2hsl, rgb2lab, rgba2hex, rgb2srgb,
+    rgb2cmyk, rgb2hex, rgb2hsl, rgb2lab, rgba2hex, rgb2srgb, rgba2srgba,
     DEFAULT_GAMMA, HEX_FORMAT_REGEX, COLOR_STRING_REGEX
 } from './conversion';
 
@@ -33,6 +34,10 @@ export class Color implements Serializable, Alterable {
         return new Color([Math.random(), Math.random(), Math.random()], alpha ? Math.random() : 1.0);
     }
 
+    static clone(color: Color): Color {
+        return new Color(color.rgba);
+    }
+
     protected _rgba: GLclampf4 = [0.0, 0.0, 0.0, Color.DEFAULT_ALPHA];
 
 
@@ -44,7 +49,7 @@ export class Color implements Serializable, Alterable {
      * @param rgba - Either RGB tuple or RGBA tuple. If none is provided, default will be kept.
      * @param alpha - If RGB tuple is provided an additional alpha value can be specified.
      */
-    constructor(color: string | GLclampf3 | GLclampf4, alpha?: GLclampf) {
+    constructor(color?: string | GLclampf3 | GLclampf4, alpha?: GLclampf) {
         if (color === undefined) {
             return;
         }
@@ -130,44 +135,37 @@ export class Color implements Serializable, Alterable {
 
     /**
      * Creates a parsable string that describes the color in a given color space.
-     * @param space - Color space to create a string for, e.g., 'rgba' or 'RGB'.
+     * @param encoding - Color space to create a string for, e.g., 'rgba' or 'RGB'.
+     * @param fractionDigits - Number of
      * @returns - String that can be used for serialization and can also be parsed by the constructor.
      */
-    toString(space: 'rgb' | 'rgba' | 'RGB' | 'RGBA' | 'hsl' | 'hsla' |
-        'lab' | 'laba' | 'cmyk' | 'cmyka' | 'hex' = 'rgba',
-        fractionDigits: number = 4): string {
+    toString(encoding: ColorEncoding = ColorEncoding.rgba,
+        fractionDigits: number = 4, encodingIdentifier?: string): string {
 
-        let values;
-        switch (space) { //
+        let values: ColorTuple;
+        switch (encoding) { //
             case 'hex':
+                return `${this.hexRGB}`;
+            case 'hexa':
                 return `${this.hexRGBA}`;
-            case 'rgb':
-                values = this.rgb;
-            case 'rgba':
             default:
-                values = this.rgba;
-            case 'RGB':
-                values = this.rgbUI8;
-            case 'RGBA':
-                values = this.rgbaUI8;
-            case 'hsl':
-                values = this.hsl;
-            case 'hsla':
-                values = this.hsla;
-            case 'lab':
-                values = this.laba;
-            case 'laba':
-                values = this.laba;
-            case 'cmyk':
-                values = this.cmyka;
-            case 'cmyka':
-                values = this.cmyka;
+                values = this.tuple(encoding);
+                break;
         }
-        return `${space}(${values?.map((value) => value.toFixed(fractionDigits)).join(', ')})`;
+        const encId = encodingIdentifier ? encodingIdentifier : encoding;
+
+        if (values instanceof Uint8Array) {
+            if (values.length === 3) {
+                return `${encId}(${values.join(', ')})`;
+            }
+            const alpha = encoding === 'RGBa' ? this.a.toFixed(fractionDigits) : `${values[3]}`;
+            return `${encId}(${values[0]}, ${values[1]}, ${values[2]}, ${alpha})`;
+        }
+        return `${encId}(${values?.map((value) => (value as number).toFixed(fractionDigits)).join(', ')})`;
     }
 
     serialize(): string {
-        return this.toString('rgba'); // most accurate storage by default.
+        return this.toString(ColorEncoding.rgba); // most accurate storage by default.
     }
 
     deserialize(text: string): void {
@@ -314,52 +312,37 @@ export class Color implements Serializable, Alterable {
     }
 
     /**
-     * Converts the RGB-based color to a gray value using the specified algorithm.
-     * @param algorithm - The algorithm used for color to gray conversion.
-     */
-    gray(algorithm: GrayscaleAlgorithm = GrayscaleAlgorithm.LinearLuminance): GLclampf {
-
-        // eslint-disable-next-line default-case
-        switch (algorithm) {
-
-            /* Does not represent shades of grayscale w.r.t. human perception of luminosity. */
-            case GrayscaleAlgorithm.Average:
-                return (this._rgba[0] + this._rgba[1] + this._rgba[2]) / 3.0;
-
-            /* flat (reduced contrast) and dark grayscale */
-            case GrayscaleAlgorithm.LeastSaturatedVariant:
-                return (Math.max(this._rgba[0], this._rgba[1], this._rgba[2])
-                    - Math.min(this._rgba[0], this._rgba[1], this._rgba[2])) * 0.5;
-
-            /* provides a darker grayscale */
-            case GrayscaleAlgorithm.MinimumDecomposition:
-                return Math.min(this._rgba[0], this._rgba[1], this._rgba[2]);
-
-            /* provides a brighter grayscale */
-            case GrayscaleAlgorithm.MaximumDecomposition:
-                return Math.max(this._rgba[0], this._rgba[1], this._rgba[2]);
-
-            case GrayscaleAlgorithm.LinearLuminance:
-                return this._rgba[0] * 0.2126 + this._rgba[1] * 0.7152 + this._rgba[2] * 0.0722;
-        }
-    }
-
-    /**
      * Enables generic color access within a specified color space.
-     * @param space - Expected color space of the requested color values.
-     * @param alpha - Whether or not alpha channel should be provided as well.
+     * @param encoding - Expected color space of the requested color values.
      */
-    tuple(space: Space, alpha: boolean = true): GLclampf3 | GLclampf4 | GLclampf5 {
+    tuple(encoding: ColorEncoding): ColorTuple {
         // eslint-disable-next-line default-case
-        switch (space) {
-            case Space.RGB:
-                return alpha ? this.rgba : this.rgb;
-            case Space.LAB:
-                return alpha ? this.laba : this.lab;
-            case Space.CMYK:
-                return alpha ? this.cmyka : this.cmyk;
-            case Space.HSL:
-                return alpha ? this.hsla : this.hsl;
+        switch (encoding) {
+            case ColorEncoding.rgb:
+                return this.rgb;
+            default:
+            case ColorEncoding.rgba:
+                return this.rgba;
+            case ColorEncoding.hex:
+            case ColorEncoding.RGB:
+                return this.RGB;
+            case ColorEncoding.hexa:
+            case ColorEncoding.RGBA:
+                return this.RGBA;
+            case ColorEncoding.RGBa:
+                return this.RGBa;
+            case ColorEncoding.hsl:
+                return this.hsl;
+            case ColorEncoding.hsla:
+                return this.hsla;
+            case ColorEncoding.lab:
+                return this.lab;
+            case ColorEncoding.laba:
+                return this.laba;
+            case ColorEncoding.cmyk:
+                return this.cmyk;
+            case ColorEncoding.cmyka:
+                return this.cmyka;
         }
     }
 
@@ -387,8 +370,7 @@ export class Color implements Serializable, Alterable {
      * Read access to the sRGB components as floating point 4-tuple, each value in range [0.0, 1.0].
      */
     srgba(gamma: GLclampf = DEFAULT_GAMMA): GLclampf4 {
-        const srgb = rgb2srgb([this._rgba[0], this._rgba[1], this._rgba[2]], gamma);
-        return [srgb[0], srgb[1], srgb[2], this._rgba[3]];
+        return rgba2srgba(this._rgba, gamma);
     }
 
 
@@ -397,6 +379,45 @@ export class Color implements Serializable, Alterable {
      */
     get rgb(): GLclampf3 {
         return [this._rgba[0], this._rgba[1], this._rgba[2]];
+    }
+
+    /**
+     * Read access to the RGBA components as floating point 4-tuple, each value in range [0.0, 1.0].
+     */
+    get rgba(): GLclampf4 {
+        return [this._rgba[0], this._rgba[1], this._rgba[2], this._rgba[3]];
+    }
+
+    /**
+     * Read access to the RGB components as floating point 3-tuple, each value in range [0.0, 255.0].
+     */
+    get RGB(): [GLubyte, GLubyte, GLubyte] {
+        return [
+            Math.round(this._rgba[0] * 255.0),
+            Math.round(this._rgba[1] * 255.0),
+            Math.round(this._rgba[2] * 255.0)];
+    }
+
+    /**
+     * Read access to the RGB components as unsigned byte 4-tuple, each value in range [0, 255].
+     */
+    get RGBA(): [GLubyte, GLubyte, GLubyte, GLubyte] {
+        return [
+            Math.round(this._rgba[0] * 255.0),
+            Math.round(this._rgba[1] * 255.0),
+            Math.round(this._rgba[2] * 255.0),
+            Math.round(this._rgba[3] * 255.0)];
+    }
+
+    /**
+     * Read access to the RGB components as 4-tuple, alpha as float in [0.0, 1.0], rgb values in range [0, 255].
+     */
+    get RGBa(): [GLubyte, GLubyte, GLubyte, GLclampf] {
+        return [
+            Math.round(this._rgba[0] * 255.0),
+            Math.round(this._rgba[1] * 255.0),
+            Math.round(this._rgba[2] * 255.0),
+            this._rgba[3]];
     }
 
     /**
@@ -420,14 +441,6 @@ export class Color implements Serializable, Alterable {
         f32Array[2] = this._rgba[2];
         return f32Array;
     }
-
-    /**
-     * Read access to the RGBA components as floating point 4-tuple, each value in range [0.0, 1.0].
-     */
-    get rgba(): GLclampf4 {
-        return this._rgba;
-    }
-
 
     /**
      * Read access to the RGBA components as array of four bytes (8bit unsigned int), each in range [0, 255].
@@ -555,22 +568,4 @@ export class Color implements Serializable, Alterable {
         return [cmyk[0], cmyk[1], cmyk[2], cmyk[3], this._rgba[3]];
     }
 
-}
-
-export enum GrayscaleAlgorithm {
-    Average = 'average',
-    LinearLuminance = 'linear-luminance', /* CIE1931 */
-    LeastSaturatedVariant = 'least-saturated-variant',
-    MinimumDecomposition = 'minimum-decomposition',
-    MaximumDecomposition = 'maximum-decomposition',
-}
-
-/**
- * Color spaces covered by this class.
- */
-export enum Space {
-    RGB = 'rgb',
-    HSL = 'hsl',
-    LAB = 'lab',
-    CMYK = 'cmyk',
 }
