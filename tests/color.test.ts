@@ -4,7 +4,8 @@
 import { expect } from 'chai';
 import { stub } from 'sinon';
 
-import { Color, GrayscaleAlgorithm, Space } from '../source/color';
+import { Color } from '../source/color';
+import { ColorEncoding } from '../source/encoding';
 
 /* spellchecker: enable */
 
@@ -153,7 +154,7 @@ describe('Color', () => {
         expect(Array.from(color.fromCMYK(0.8, 0.7, 0.6, 0.5).rgbUI8)).to.have.ordered.members([25, 38, 51]);
     });
 
-    it('should log and clamp on out of range CMYK components to RGB conversion', () => {
+    it('should not log and clamp on out of range CMYK components to RGB conversion', () => {
         const color = new Color();
         const consoleLogStub = stub(console, 'info');
 
@@ -162,7 +163,7 @@ describe('Color', () => {
         expect(Array.from(color.fromCMYK(+0.0, +1.1, +0.0, +0.0).rgbUI8)).to.have.ordered.members([255, 0, 255]);
         expect(Array.from(color.fromCMYK(+0.0, +0.0, +1.1, +0.0).rgbUI8)).to.have.ordered.members([255, 255, 0]);
 
-        expect(consoleLogStub.callCount).to.equal(4);
+        expect(consoleLogStub.callCount).to.equal(0);
         consoleLogStub.restore();
     });
 
@@ -209,7 +210,7 @@ describe('Color', () => {
         expect(Array.from(color.fromHSL(0.125, 0.75, 0.5, 0.25).rgbaUI8)).to.have.ordered.members([223, 175, 32, 64]);
     });
 
-    it('should log and clamp on out of range HSL components to RGB conversion', () => {
+    it('should not log and clamp on out of range HSL components to RGB conversion', () => {
         const color = new Color();
         const consoleLogStub = stub(console, 'info');
 
@@ -218,7 +219,7 @@ describe('Color', () => {
         expect(Array.from(color.fromHSL(+0.1, +0.1, +1.1).rgbUI8)).to.have.ordered.members([255, 255, 255]);
         expect(Array.from(color.fromHSL(+0.1, +1.1, +0.1).rgbUI8)).to.have.ordered.members([51, 31, 0]);
 
-        expect(consoleLogStub.callCount).to.equal(4);
+        expect(consoleLogStub.callCount).to.equal(0);
         consoleLogStub.restore();
     });
 
@@ -313,7 +314,7 @@ describe('Color', () => {
         expect(Array.from(color.fromLAB(0.33, 0.66, 0.99).rgbUI8)).to.have.ordered.members([129, 44, 0]);
     });
 
-    it('should log and clamp on out of range LAB components to RGB conversion', () => {
+    it('should not log and clamp on out of range LAB components to RGB conversion', () => {
         const color = new Color();
         const consoleLogStub = stub(console, 'info');
 
@@ -322,7 +323,7 @@ describe('Color', () => {
         expect(Array.from(color.fromLAB(+1.0, +1.1, +0.1).rgbUI8)).to.have.ordered.members([255, 125, 255]);
         expect(Array.from(color.fromLAB(+1.0, +0.1, +1.1).rgbUI8)).to.have.ordered.members([167, 255, 0]);
 
-        expect(consoleLogStub.callCount).to.equal(4);
+        expect(consoleLogStub.callCount).to.equal(0);
         consoleLogStub.restore();
     });
 
@@ -357,36 +358,18 @@ describe('Color', () => {
         expect(laba[3]).to.be.closeTo(0.2510, 1e-4);
     });
 
-
-    it('should compute various grayscales', () => {
-        const color = new Color();
-        color.fromUI8(48, 96, 192);
-
-        expect(color.gray(GrayscaleAlgorithm.Average)).to.be.closeTo(0.4392, 1e-4);
-        expect(color.gray(GrayscaleAlgorithm.LeastSaturatedVariant)).to.be.closeTo(0.2824, 1e-4);
-        expect(color.gray(GrayscaleAlgorithm.LinearLuminance)).to.be.closeTo(0.3636, 1e-4);
-        expect(color.gray(GrayscaleAlgorithm.MaximumDecomposition)).to.be.closeTo(0.7529, 1e-4);
-        expect(color.gray(GrayscaleAlgorithm.MinimumDecomposition)).to.be.closeTo(0.1882, 1e-4);
-
-        expect(color.gray()).to.be.closeTo(0.3636, 1e-4);
-    });
-
-
     it('should track alterations', () => {
         const color = new Color();
-        expect(color.altered).to.be.false;
+        expect(color.altered()).to.be.false;
 
         color.fromUI8(48, 96, 192);
-        expect(color.altered).to.be.true;
-
-        color.altered = false;
-        expect(color.altered).to.be.false;
+        expect(color.altered(true)).to.be.true;
+        expect(color.altered()).to.be.false;
 
         color.fromHex('#250285');
-        expect(color.altered).to.be.true;
-        color.altered = false;
+        expect(color.altered(true)).to.be.true;
         color.fromHex('#250285');
-        expect(color.altered).to.be.false;
+        expect(color.altered()).to.be.false;
     });
 
 
@@ -406,44 +389,43 @@ describe('Color', () => {
         expect(color0.equals(color1)).to.be.false;
     });
 
-
-    it('should support tuple conversion for supported color spaces', () => {
+    it('should support tuple conversion for supported encodings', () => {
         const color = new Color();
 
-        const cmyk = color.fromUI8(138, 122, 107).tuple(Space.CMYK, false);
+        const cmyk = color.fromUI8(138, 122, 107).tuple(ColorEncoding.cmyk);
         expect(cmyk.length).to.be.equal(4);
         expect(cmyk[0]).to.be.closeTo(0.0000, 1e-4);
         expect(cmyk[1]).to.be.closeTo(0.1159, 1e-4);
         expect(cmyk[2]).to.be.closeTo(0.2246, 1e-4);
         expect(cmyk[3]).to.be.closeTo(0.4588, 1e-4);
-        const cmyka = color.fromUI8(134, 116, 39).tuple(Space.CMYK);
+        const cmyka = color.fromUI8(134, 116, 39).tuple(ColorEncoding.cmyka);
         expect(cmyka.length).to.be.equal(5);
         expect(cmyka[4]).to.be.equal(1.0);
 
-        const hsl = color.fromUI8(48, 56, 64).tuple(Space.HSL, false);
+        const hsl = color.fromUI8(48, 56, 64).tuple(ColorEncoding.hsl);
         expect(hsl.length).to.be.equal(3);
         expect(hsl[0]).to.be.closeTo(0.5833, 1e-4);
         expect(hsl[1]).to.be.closeTo(0.1429, 1e-4);
         expect(hsl[2]).to.be.closeTo(0.2196, 1e-4);
-        const hsla = color.fromUI8(134, 116, 39).tuple(Space.HSL);
+        const hsla = color.fromUI8(134, 116, 39).tuple(ColorEncoding.hsla);
         expect(hsla.length).to.be.equal(4);
         expect(hsla[3]).to.be.equal(1.0);
 
-        const lab = color.fromUI8(100, 116, 39).tuple(Space.LAB, false);
+        const lab = color.fromUI8(100, 116, 39).tuple(ColorEncoding.lab);
         expect(lab.length).to.be.equal(3);
         expect(lab[0]).to.be.closeTo(0.4565, 1e-4);
         expect(lab[1]).to.be.closeTo(0.4121, 1e-4);
         expect(lab[2]).to.be.closeTo(0.6744, 1e-4);
-        const laba = color.fromUI8(100, 116, 39).tuple(Space.LAB);
+        const laba = color.fromUI8(100, 116, 39).tuple(ColorEncoding.laba);
         expect(laba.length).to.be.equal(4);
         expect(laba[3]).to.be.equal(1.0);
 
-        const rgb = color.fromUI8(26, 51, 77).tuple(Space.RGB, false);
+        const rgb = color.fromUI8(26, 51, 77).tuple(ColorEncoding.rgb);
         expect(rgb.length).to.be.equal(3);
         expect(rgb[0]).to.be.closeTo(0.1020, 1e-4);
         expect(rgb[1]).to.be.closeTo(0.2000, 1e-4);
         expect(rgb[2]).to.be.closeTo(0.3020, 1e-4);
-        const rgba = color.fromUI8(134, 116, 39).tuple(Space.RGB);
+        const rgba = color.fromUI8(134, 116, 39).tuple(ColorEncoding.rgba);
         expect(rgba.length).to.be.equal(4);
         expect(rgba[3]).to.be.equal(1.0);
     });

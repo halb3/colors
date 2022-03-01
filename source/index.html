@@ -15,6 +15,10 @@
         integrity="sha256-tB5d+zyWiHQFQmJbLkUB/R3yq3K5zmN+38cBOZBwjkg=" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/roboto-mono@4.5.0/latin-300.css"
         integrity="sha256-/bTf0ZdBXp9eQn0Xbgim3IoygJpVg108KstIe5AKO7E=" crossorigin="anonymous">
+    <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@simonwep/pickr@1.8.2/dist/themes/classic.min.css"
+        integrity="sha256-wOtWX5gF5Lnh5wcTsaac5GFuG606iRfsJ20bVII+ajI=" crossorigin="anonymous"> -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@simonwep/pickr@1.8.2/dist/themes/monolith.min.css"
+        integrity="sha256-avN2dqoEKKGFcYEoeIyi33E9SRylX1aB6G4JnchaN80=" crossorigin="anonymous">
 </head>
 
 <body>
@@ -24,7 +28,7 @@
         <div class="row justify-content-center">
             <div class="col-12 col-lg-8">
 
-                <h1>haeley-<strong>colors</strong></h1>
+                <h1>@haeley/<strong>colors</strong></h1>
                 <p class="lead">Test Page for Development</p>
                 <p>// about:
                     version <code id="version">version</code>,
@@ -35,8 +39,199 @@
             </div>
         </div>
 
+        <div class="row justify-content-center">
+            <div class="col-12 col-lg-8">
+
+                <h2>Selected Features</h2>
+                <p>The <code>Color</code> class supports color space, color-vision, and grayscale deficiency
+                    transformations:</p>
+
+                <div class="row g-2">
+                    <div class="col">
+                        <figure class="figure img-thumbnail rounded rounded-4">
+                            <canvas class="color" id="color-0"></canvas>
+                            <figcaption class="figure-caption">Input Color</figcaption>
+                        </figure>
+                    </div>
+                    <div class="col">
+                        <figure class="figure img-thumbnail rounded rounded-4">
+                            <canvas class="color" id="color-1"></canvas>
+                            <figcaption class="figure-caption">Gamma Corrected</figcaption>
+                        </figure>
+                    </div>
+
+                    <div class="col">
+                        <figure class="figure img-thumbnail rounded rounded-4">
+                            <canvas class="color" id="color-2"></canvas>
+                            <figcaption class="figure-caption">Protanope</figcaption>
+                        </figure>
+                    </div>
+
+                    <div class="col">
+                        <figure class="figure img-thumbnail rounded rounded-4">
+                            <canvas class="color" id="color-3"></canvas>
+                            <figcaption class="figure-caption">Deuteranope</figcaption>
+                        </figure>
+                    </div>
+
+                    <div class="col">
+                        <figure class="figure img-thumbnail rounded rounded-4">
+                            <canvas class="color" id="color-4"></canvas>
+                            <figcaption class="figure-caption">Tritanope</figcaption>
+                        </figure>
+                    </div>
+                </div>
+
+                <div class="row g-2">
+                    <div class="col">
+                        <figure class="figure img-thumbnail rounded rounded-4">
+                            <canvas class="color" id="color-5"></canvas>
+                            <figcaption class="figure-caption">Linear Lum. CIE1931</figcaption>
+                        </figure>
+                    </div>
+
+                    <div class="col">
+                        <figure class="figure img-thumbnail rounded rounded-4">
+                            <canvas class="color" id="color-6"></canvas>
+                            <figcaption class="figure-caption">Average Gray</figcaption>
+                        </figure>
+                    </div>
+
+                    <div class="col">
+                        <figure class="figure img-thumbnail rounded rounded-4">
+                            <canvas class="color" id="color-7"></canvas>
+                            <figcaption class="figure-caption">Least Saturated</figcaption>
+                        </figure>
+                    </div>
+
+                    <div class="col">
+                        <figure class="figure img-thumbnail rounded rounded-4">
+                            <canvas class="color" id="color-8"></canvas>
+                            <figcaption class="figure-caption">Min. Decomp.</figcaption>
+                        </figure>
+                    </div>
+
+                    <div class="col">
+                        <figure class="figure img-thumbnail rounded rounded-4">
+                            <canvas class="color" id="color-9"></canvas>
+                            <figcaption class="figure-caption">Max. Decomp.</figcaption>
+                        </figure>
+                    </div>
+                </div>
+
+                <p class="mb-1">Color input methods:</p>
+                <div class="row g-2 mb-2">
+                    <div class="col-4">
+                        <div class="form-floating">
+                            <input type="text" class="form-control font-monospace" id="text-f32"
+                                value="0.0, 0.0, 0.0, 1.0">
+                            <label for="text-f32"><code>fromF32/fromRGB =</code></label>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="form-floating">
+                            <input type="text" class="form-control font-monospace" id="text-ui8" value="0, 0, 0, 255">
+                            <label for="text-ui8"><code>fromUI8 =</code></label>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="form-floating">
+                            <input type="text" class="form-control font-monospace" id="text-hsl"
+                                value="0.0, 0.0, 0.0, 1.0">
+                            <label for="text-hsl"><code>fromHSL =</code></label>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="form-floating">
+                            <input type="text" class="form-control font-monospace" id="text-lab"
+                                value="0.0, 0.0, 0.0, 1.0">
+                            <label for="text-lab"><code>fromLAB =</code></label>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="form-floating">
+                            <input type="text" class="form-control font-monospace" id="text-cmyk"
+                                value="0.0, 0.0, 0.0, 0.0, 1.0">
+                            <label for="text-cmyk"><code>fromCMYK =</code></label>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="form-floating">
+                            <input type="text" class="form-control font-monospace" id="text-hex" value="000000ff">
+                            <label for="text-hex"><code>fromHex =</code></label>
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-2">
+                    <div class="col-3">
+                        <div class="input-group mb-3">
+                            <span class="input-group-text">Alpha:</span>
+                            <input type="number" class="form-control" id="number-alpha" step="0.01" min="0.0" max="1.0"
+                                value="1.0">
+                        </div>
+                    </div>
+
+                    <div class="col-3">
+                        <div class="input-group mb-3">
+                            <span class="input-group-text">Gamma:</span>
+                            <input type="number" class="form-control" id="number-gamma" step="0.1" min="1.0" max="3.0"
+                                value="2.2">
+                        </div>
+                    </div>
+
+                    <div class="col-auto">
+                        <div class="form-floating">
+                            <button type="button" class="btn btn-secondary" id="btn-rand">Randomize Color</button>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <div class="form-floating">
+                            <button type="button" class="btn btn-secondary" id="btn-pickr">Pick Color</button>
+                        </div>
+                    </div>
+
+                    <pre class="bg-light px-3 py-2 border-start" id="pre-color-string"></pre>
+                </div>
+
+            </div>
+        </div>
+
         <div class="row mt-4 justify-content-center">
             <div class="col-12 col-lg-8 text-start">
+
+                <h2>Color Scales from Presets</h2>
+                <p>In order to load color scales from presets, the respective data files are required:
+                    <code>colorbrewer.json</code>, <code>marcosci.json</code>,
+                    <code>mikhailov.json</code>, and <code>smithwalt.json</code>.
+                </p>
+
+                <div class="row g-2 mb-2 text-al">
+
+                    <div class="col">
+                        <div class="input-group mb-3">
+                            <span class="input-group-text">Color-Vision-Deficiency:</span>
+                            <select class="form-select" id="scales-daltonize"
+                                aria-label="Floating label select example">
+                                <option value="0" selected>None</option>
+                                <option value="1">Protanope
+                                    (reds are greatly reduced, 1% men)</option>
+                                <option value="2">Deuteranope
+                                    (greens are greatly reduced, 1% men)</option>
+                                <option value="3">Tritanope
+                                    (blues are greatly reduced, 0.003% population) </option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-3">
+                        <div class="input-group mb-3">
+                            <span class="input-group-text">Gamma:</span>
+                            <input type="number" class="form-control" id="scales-gamma" step="0.1" min="1.0" max="3.0"
+                                value="2.2">
+                        </div>
+                    </div>
+
+                </div>
 
                 <table class="table caption-top small">
                     <caption>Test: fetch scales from json files:</caption>
@@ -72,11 +267,16 @@
 </body>
 
 <script type="module">
-    import * as auxiliaries from 'haeley-auxiliaries';
-    import * as math from 'haeley-math';
+    import * as auxiliaries from '@haeley/auxiliaries';
+    import * as math from '@haeley/math';
     import * as colors from './index.ts';
     window['haeley'] = { auxiliaries, math, colors };
 </script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha256-9SEPo+fwJFpMUet/KACSwO+Z/dKMReF9q4zFhU/fT9M=" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr@1.8.2/dist/pickr.min.js"
+    integrity="sha256-o9s4He2YF1rlZ/prPi6jpMStF3SKxszT8wOyA6r9M0U=" crossorigin="anonymous"></script>
 
 <script>
     window.onload = () => {
@@ -89,76 +289,261 @@
 
         console.log("'haeley-colors' imported:", haeley);
 
+        { // Color Features
 
-        const presets = [
-            ['smithwalt', 'viridis', 1, false],
-            ['smithwalt', 'viridis', 64, false],
-            ['smithwalt', 'inferno', 7, false],
-            ['smithwalt', 'inferno', 64, false],
+            const preString = document.getElementById(`pre-color-string`);
 
-            ['marcosci', 'cividis', 7, false],
-            ['marcosci', 'cividis', 64, false],
-            ['smithwalt', 'magma', 7, false],
-            ['smithwalt', 'magma', 64, false],
+            const color0 = document.getElementById(`color-0`);
+            const context0 = color0.getContext('2d');
+            const color1 = document.getElementById(`color-1`);
+            const context1 = color1.getContext('2d');
+            const color2 = document.getElementById(`color-2`);
+            const context2 = color2.getContext('2d');
+            const color3 = document.getElementById(`color-3`);
+            const context3 = color3.getContext('2d');
+            const color4 = document.getElementById(`color-4`);
+            const context4 = color4.getContext('2d');
+            const color5 = document.getElementById(`color-5`);
+            const context5 = color5.getContext('2d');
+            const color6 = document.getElementById(`color-6`);
+            const context6 = color6.getContext('2d');
+            const color7 = document.getElementById(`color-7`);
+            const context7 = color7.getContext('2d');
+            const color8 = document.getElementById(`color-8`);
+            const context8 = color8.getContext('2d');
+            const color9 = document.getElementById(`color-9`);
+            const context9 = color9.getContext('2d');
 
-            ['colorbrewer', 'Greys', 4, true],
-            ['colorbrewer', 'Greys', 7, true],
-            ['smithwalt', 'plasma', 7, false],
-            ['smithwalt', 'plasma', 64, false],
+            const textF32 = document.getElementById(`text-f32`);
+            const textUI8 = document.getElementById(`text-ui8`);
+            const textHSL = document.getElementById(`text-hsl`);
+            const textLAB = document.getElementById(`text-lab`);
+            const textCMYK = document.getElementById(`text-cmyk`);
+            const textHex = document.getElementById(`text-hex`);
 
-            ['colorbrewer', 'Spectral', 7, true],
-            ['colorbrewer', 'Spectral', 64, true],
-            ['mikhailov', 'turbo', 16, false],
-            ['mikhailov', 'turbo', 128, false],
+            const numberAlpha = document.getElementById(`number-alpha`);
+            const numberGamma = document.getElementById(`number-gamma`);
 
-            ['colorbrewer', 'BrBG', 7, true],
-            ['colorbrewer', 'RdBu', 64, true],
-            ['colorbrewer', 'RdYlBu', 7, true],
-            ['colorbrewer', 'PuOr', 7, true],
+            const invalidate = (element, valid) => {
+                element.classList.remove(valid ? 'is-invalid' : 'is-valid');
+                element.classList.add(valid ? 'is-valid' : 'is-invalid');
+            }
 
-            ['colorbrewer', 'OrRd', 4, false],
-            ['colorbrewer', 'OrRd', 7, false],
-            ['colorbrewer', 'RdPu', 4, false],
-            ['colorbrewer', 'RdPu', 7, false],
+            const rgb2hex = haeley.colors.rgb2hex;
+            const daltonize = haeley.colors.daltonize;
+            const grayscale = haeley.colors.grayscale;
 
-            ['colorbrewer', 'Accent', 7, false],
-            ['colorbrewer', 'Paired', 7, false],
-            ['colorbrewer', 'Pastel2', 7, false],
-            ['colorbrewer', 'Dark2', 7, false]
-        ];
+            let gamma = haeley.colors.DEFAULT_GAMMA;
+            let test = haeley.colors.Color.random(false);
 
-        var tbody = document.getElementById('scales');
+            const pickr = Pickr.create({
+                el: '#btn-pickr',
+                useAsButton: true,
+                theme: 'monolith',
+                components: {
+                    preview: false,
+                    opacity: true,
+                    hue: true,
+                }
+            });
+            pickr.setColorRepresentation('RGBA');
 
-        presets.forEach((value, index) => {
+            const updateColorCanvas = (canvas, context, color) => {
+                context.fillStyle = haeley.colors.rgba2hex(color);
+                context.clearRect(0, 0, canvas.width, canvas.height);
+                context.fillRect(0, 0, canvas.width, canvas.height);
+            };
 
-            const file = `./${value[0]}.json`;
-            const preset = value[1];
-            const stepCount = value[2];
-            const invert = value[3];
+            const updateColor = (color, updatePickr = false) => {
 
-            tbody.insertAdjacentHTML('beforeend',
-                `<tr class="align-middle m-0 p-0">` +
-                `<th scope="row"><code>${preset}</code><code class="text-muted">-${stepCount}${value[3] ? '-inverted' : ''}</code></th>` +
-                `<td><code class="text-muted">${file}</code></td>` +
-                `<td><canvas class="" id="scale-${index}"></canvas></td>` +
-                `</tr>`);
+                updateColorCanvas(color0, context0, color.rgba);
+                updateColorCanvas(color1, context1, color.srgba(gamma));
+                updateColorCanvas(color2, context2, daltonize(color.rgba,
+                    haeley.colors.ColorVisionDeficiency.Protanope, gamma));
+                updateColorCanvas(color3, context3, daltonize(color.rgba,
+                    haeley.colors.ColorVisionDeficiency.Deuteranope, gamma));
+                updateColorCanvas(color4, context4, daltonize(color.rgba,
+                    haeley.colors.ColorVisionDeficiency.Tritanope, gamma));
 
-            haeley.colors.ColorScale.fromPreset(file, preset, stepCount).then(
-                (scale) => {
-                    const canvas = document.getElementById(`scale-${index}`);
-                    const context = canvas.getContext('2d');
 
-                    canvas.width = stepCount;
+                updateColorCanvas(color5, context5, grayscale(color.rgba,
+                    haeley.colors.GrayscaleAlgorithm.LinearLuminance));
+                updateColorCanvas(color6, context6, grayscale(color.rgba,
+                    haeley.colors.GrayscaleAlgorithm.Average));
+                updateColorCanvas(color7, context7, grayscale(color.rgba,
+                    haeley.colors.GrayscaleAlgorithm.LeastSaturatedVariant));
+                updateColorCanvas(color8, context8, grayscale(color.rgba,
+                    haeley.colors.GrayscaleAlgorithm.MinimumDecomposition));
+                updateColorCanvas(color9, context9, grayscale(color.rgba,
+                    haeley.colors.GrayscaleAlgorithm.MaximumDecomposition));
+
+                textF32.value = color.rgb.map((v) => v.toFixed(3)).join(', ');
+                textUI8.value = color.rgbUI8.map((v) => v.toFixed(0)).join(', ');
+                textHSL.value = color.hsl.map((v) => v.toFixed(3)).join(', ');
+                textLAB.value = color.lab.map((v) => v.toFixed(3)).join(', ');
+                textCMYK.value = color.cmyk.map((v) => v.toFixed(2)).join(', ');
+                textHex.value = color.hexRGB;
+                numberAlpha.value = color.a.toFixed(2);
+
+
+                preString.innerHTML =
+                    `// example code using the Color class:
+const colors = new Array<Color>(8);
+colors[0] = new Color([${color.rgb.map((x) => x.toFixed(4)).join(', ')}], ${color.a.toFixed(4)});
+colors[1] = new Color([${color.rgba.map((x) => x.toFixed(4)).join(', ')}]);
+colors[2] = new Color('${color.toString('laba')}');
+colors[3] = new Color('${color.toString('RGBA')}');
+colors[4] = new Color('${color.toString('hex')}');
+colors[5] = new Color();
+colors[5].fromString('${color.toString('cmyka')}');
+colors[6] = new Color();
+colors[6].fromString('${color.toString('rgba')}');
+colors[7] = Color.random();`;
+            }
+
+            document.getElementById(`btn-rand`).onclick = event => {
+                test = haeley.colors.Color.random(false);
+                updateColor(test);
+            }
+
+            pickr.on('show', (color, instance) => {
+                pickr.setColor(test.toString('RGBa', 4, 'rgba'));
+            });
+
+            pickr.on('change', (color, source, instance) => {
+                const rgba = color.toRGBA();
+                rgba[3] *= 255; // some issue with alpha representation when not used
+                updateColor(test.fromUI8(rgba[0], rgba[1], rgba[2], rgba[3]));
+            });
+
+            textF32.onchange = () => {
+                test.fromString(`rgb(${textF32.value})`);
+                updateColor(test);
+            }
+            textUI8.onchange = () => {
+                test.fromString(`RGB(${textUI8.value})`);
+                updateColor(test);
+            }
+            textHSL.onchange = () => {
+                test.fromString(`hsl(${textHSL.value})`);
+                updateColor(test);
+            }
+            textLAB.onchange = () => {
+                test.fromString(`lab(${textLAB.value})`);
+                updateColor(test);
+            }
+            textCMYK.onchange = () => {
+                test.fromString(`cmyk(${textCMYK.value})`);
+                updateColor(test);
+            }
+            textHex.onchange = () => {
+                test.fromString(textHex.value);
+                updateColor(test);
+            }
+            numberAlpha.onchange = () => {
+                test.a = numberAlpha.value;
+                updateColor(test);
+            }
+            numberGamma.onchange = () => {
+                gamma = numberGamma.value;
+                updateColor(test);
+            }
+
+            updateColor(test);
+        }
+
+        { // Color Scales from Presets
+
+            const presets = [
+                ['smithwalt', 'viridis', 7, false],
+                ['smithwalt', 'viridis', 64, false],
+                ['smithwalt', 'inferno', 7, false],
+                ['smithwalt', 'inferno', 64, false],
+
+                ['marcosci', 'cividis', 7, false],
+                ['marcosci', 'cividis', 64, false],
+                ['smithwalt', 'magma', 7, false],
+                ['smithwalt', 'magma', 64, false],
+
+                ['colorbrewer', 'Greys', 4, true],
+                ['colorbrewer', 'Greys', 7, true],
+                ['smithwalt', 'plasma', 7, false],
+                ['smithwalt', 'plasma', 64, false],
+
+                ['colorbrewer', 'Spectral', 7, true],
+                ['colorbrewer', 'Spectral', 64, true],
+                ['mikhailov', 'turbo', 16, false],
+                ['mikhailov', 'turbo', 128, false],
+
+                ['colorbrewer', 'BrBG', 7, true],
+                ['colorbrewer', 'RdBu', 64, true],
+                ['colorbrewer', 'RdYlBu', 7, true],
+                ['colorbrewer', 'PuOr', 7, true],
+
+                ['colorbrewer', 'OrRd', 4, false],
+                ['colorbrewer', 'OrRd', 7, false],
+                ['colorbrewer', 'RdPu', 4, false],
+                ['colorbrewer', 'RdPu', 7, false],
+
+                ['colorbrewer', 'Accent', 7, false],
+                ['colorbrewer', 'Paired', 7, false],
+                ['colorbrewer', 'Pastel2', 7, false],
+                ['colorbrewer', 'Dark2', 7, false]
+            ];
+
+            const tbody = document.getElementById('scales');
+            const scalesDaltonize = document.getElementById('scales-daltonize');
+            const scalesGamma = document.getElementById('scales-gamma');
+
+            const scales = new Array(presets.length);
+
+            const updateScale = (index) => {
+                const scale = scales[index];
+                scale.deficiency = parseInt(scalesDaltonize.value, 10);
+                scale.gamma = scalesGamma.value;
+
+                const canvas = document.getElementById(`scale-${index}`);
+                const context = canvas.getContext('2d');
+
+                if (canvas.width !== scale.length) {
+                    canvas.width = scale.length;
+                }
+                if (canvas.height !== 1) {
                     canvas.height = 1;
-                    if (invert) {
-                        scale.invert();
-                    }
+                }
 
-                    const image = new ImageData(scale.bitsUI8(), Math.max(2, stepCount), 1);
-                    context.putImageData(image, 0, 0);
-                });
+                const image = new ImageData(scale.bitsUI8('rgb', true), Math.max(2, scale.length), 1);
+                context.putImageData(image, 0, 0);
+            };
 
-        });
+            const updateScales = () => scales.forEach((scale, index) => updateScale(index));
+            scalesDaltonize.onchange = scalesGamma.onchange = updateScales;
+
+            presets.forEach((value, index) => {
+
+                const file = `./${value[0]}.json`;
+                const preset = value[1];
+                const stepCount = value[2];
+                const invert = value[3];
+
+                tbody.insertAdjacentHTML('beforeend',
+                    `<tr class="align-middle m-0 p-0">` +
+                    `<th scope="row"><code>${preset}</code><code class="text-muted">-${stepCount}${value[3] ? '-inverted' : ''}</code></th>` +
+                    `<td><code class="text-muted">${file}</code></td>` +
+                    `<td><canvas class="scale" id="scale-${index}"></canvas></td>` +
+                    `</tr>`);
+
+                scales[index] = haeley.colors.ColorScale.fromPreset(file, preset, stepCount).then(
+                    (scale) => {
+                        if (invert) {
+                            scale.invert();
+                        }
+                        scales[index] = scale;
+                        updateScale(index);
+                    });
+            });
+
+        }
 
     };
 </script>
@@ -179,10 +564,20 @@
         font-family: "Roboto Mono" !important;
     }
 
-    canvas {
+    canvas.scale {
         image-rendering: pixelated;
         height: 2rem;
         width: 14rem;
+    }
+
+    canvas.color {
+        image-rendering: pixelated;
+        height: 4rem;
+        width: 100%;
+
+        background: repeating-conic-gradient(lightgray 0% 25%, white 0% 50%);
+        background-size: 16px 16px;
+        background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
     }
 </style>
 

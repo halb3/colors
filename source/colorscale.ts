@@ -1,32 +1,35 @@
 
 /* spellchecker: disable */
 
-import { assert, fetchJsonAsync, jsonschema } from 'haeley-auxiliaries';
-import { clamp } from 'haeley-math';
+import { assert, fetchJsonAsync, jsonschema } from '@haeley/auxiliaries';
+import { clamp } from '@haeley/math';
 
-import { Color, Space } from './color';
+import { ColorEncoding, ColorSpace, getEncodingFromSpace, length } from './encoding';
+import { ColorVisionDeficiency, daltonize } from './daltonize';
+import { Color, DEFAULT_GAMMA } from './color';
 import { lerp } from './lerp';
 
 import PresetsSchema from './colorscalepresets.schema.json';
+import { ColorTuple } from '.';
 
 /* spellchecker: enable */
 
 
-// /**
-//  * Basic color gradient representation that uses color stops, a color at a specific position, to allow for color
-//    queries
-//  * at arbitrary positions. The gradient provides {@link Color} instances to facilitate the use of various color
-//    spaces.
-//  * ```
-//  * const gradient = new ColorGradient();
-//  * gradient.add(new gloperate.Color([0.09, 0.43, 0.58]), 0.2);
-//  * gradient.add(new gloperate.Color([0.97, 0.98, 0.98]), 0.8);
-//  * ...
-//  * gradient.color(0.66).rgb; // [0.7646666765213013, 0.8516666889190674, 0.8866666555404663]
-//  * gradient.lerpSpace = ColorGradient.LerpSpace.LAB;
-//  * gradient.color(0.66).rgb; // [0.8264121413230896, 0.8263672590255737, 0.8262822031974792]
-//  * ```
-//  */
+/**
+ * Basic color gradient representation that uses color stops, a color at a specific position, to allow for color
+   queries
+ * at arbitrary positions. The gradient provides {@link Color} instances to facilitate the use of various color
+   spaces.
+ * ```
+ * const gradient = new ColorGradient();
+ * gradient.add(new gloperate.Color([0.09, 0.43, 0.58]), 0.2);
+ * gradient.add(new gloperate.Color([0.97, 0.98, 0.98]), 0.8);
+ * ...
+ * gradient.color(0.66).rgb; // [0.7646666765213013, 0.8516666889190674, 0.8866666555404663]
+ * gradient.lerpSpace = ColorGradient.LerpSpace.LAB;
+ * gradient.color(0.66).rgb; // [0.8264121413230896, 0.8263672590255737, 0.8262822031974792]
+ * ```
+ */
 export class ColorScale {
 
     /** @see{@link hint} */
@@ -38,24 +41,13 @@ export class ColorScale {
     /** @see{@link invert} */
     protected _inverted = false;
 
+    /** @see{@link deficiency} */
+    protected _deficiency = ColorVisionDeficiency.None;
+
+    /** @see{@link gamma} */
+    protected _gamma = DEFAULT_GAMMA;
+
     static readonly PresetSchema: jsonschema.Schema = PresetsSchema;
-
-
-    /**
-     * Returns the stride for interleaved arrays of color components based on the array type.
-     * @param type - One of the supported color array types.
-     */
-    protected static stride(type: ArrayType): number {
-        switch (type) {
-            case ArrayType.RGBA:
-            case ArrayType.RGBAf:
-                return 4;
-            case ArrayType.RGB:
-            case ArrayType.RGBf:
-            default:
-                return 3;
-        }
-    }
 
 
     /**
@@ -99,8 +91,8 @@ export class ColorScale {
                 return undefined;
             }
 
-            const type = p.format;
-            const stride = ColorScale.stride(type);
+            const encoding = p.encoding as SupportedEncodings;
+            const stride = length(encoding);
 
             /* Find best color array match for targeted step count. The best match is either the exact number of
             colors or the largest available number. */
@@ -118,7 +110,7 @@ export class ColorScale {
             /* Check if there is a matching positions array to the selected color array. */
             const positionsByStepCount = p.positions;
             if (positionsByStepCount === undefined) {
-                return ColorScale.fromArray(colors, type, stepCount, undefined);
+                return ColorScale.fromArray(colors, encoding, stepCount, undefined);
             }
 
             let positions: Array<number> | undefined;
@@ -128,7 +120,7 @@ export class ColorScale {
                 }
                 positions = positionsByStepCount[i];
             }
-            return ColorScale.fromArray(colors, type, stepCount, positions);
+            return ColorScale.fromArray(colors, encoding, stepCount, positions);
         };
 
         return fetchJsonAsync<ColorScale>(url, transform, ColorScale.PresetSchema);
@@ -138,36 +130,36 @@ export class ColorScale {
      * Creates a color scale from a set of colors and (optional) positions for a specific step count. If no positions
      * are specified, the colors are spread equally. A step count of 1 returns the first color.
      * @param interleavedColorComponents - Interleaved array of color components, e.g., red, green, and blue.
-     * @param type - The array type specifying the number of subsequent color components for each color.
+     * @param encoding - The array type specifying the number of subsequent color components for each color.
      * @param stepCount - Number of colors to be computed from the color scale.
      * @param positions - Interleaved array of positions, matching the length of the color array divided by stride.
      * @returns - A color scale of fixed number and position of colors for index and linear interpolation access.
      */
-    static fromArray(interleavedColorComponents: Array<number>, type: ArrayType,
+    static fromArray(interleavedColorComponents: Array<number>, encoding: SupportedEncodings,
         stepCount: number, positions?: Array<number>): ColorScale {
         if (stepCount === 0 || interleavedColorComponents.length === 0) {
             return new ColorScale();
         }
 
         const array = interleavedColorComponents; // just a shorter handle
-        const stride = ColorScale.stride(type);
+        const stride = length(encoding);
         const size = array.length / stride;
         const colors = new Array<Color>(size);
 
         /* Transform the interleaved array values into instances of Color. */
         for (let i = 0; i < array.length; i += stride) {
             const color = new Color();
-            switch (type) {
-                case ArrayType.RGB:
+            switch (encoding) {
+                case ColorEncoding.RGB:
                     color.fromUI8(array[i + 0], array[i + 1], array[i + 2]);
                     break;
-                case ArrayType.RGBA:
+                case ColorEncoding.RGBA:
                     color.fromUI8(array[i + 0], array[i + 1], array[i + 2], array[i + 3]);
                     break;
-                case ArrayType.RGBf:
+                case ColorEncoding.rgb:
                     color.fromF32(array[i + 0], array[i + 1], array[i + 2]);
                     break;
-                case ArrayType.RGBAf:
+                case ColorEncoding.rgba:
                     color.fromF32(array[i + 0], array[i + 1], array[i + 2], array[i + 3]);
                     break;
                 default:
@@ -229,7 +221,7 @@ export class ColorScale {
                 break;
             }
             const a = (position - positions[lower]) / (positions[upper] - positions[lower]);
-            scale._colors.push(lerp(colors[lower], colors[upper], a, Space.LAB));
+            scale._colors.push(lerp(colors[lower], colors[upper], a, ColorSpace.lab));
         }
         return scale;
     }
@@ -244,7 +236,7 @@ export class ColorScale {
      * @param space - The color space that is to be used for linear interpolation of two colors.
      * @returns - Color, depending on the gradient type either linearly or nearest filtered color.
      */
-    lerp(position: number, space: Space = Space.LAB): Color | undefined {
+    lerp(position: number, space: ColorSpace = ColorSpace.lab): Color | undefined {
 
         if (this._colors.length === 0) {
             return undefined;
@@ -337,24 +329,54 @@ export class ColorScale {
         this._inverted = !this._inverted;
     }
 
+    /**
+     * Returns the color-vision-deficiency transformation.
+     */
+    get deficiency(): ColorVisionDeficiency {
+        return this._deficiency;
+    }
+    set deficiency(deficiency: ColorVisionDeficiency) {
+        this._deficiency = deficiency;
+    }
+
+    /**
+    * Returns the gamma value used for the set color-vision-deficiency transformation.
+    */
+    get gamma(): GLclampf {
+        return this._gamma;
+    }
+    set gamma(gamma: GLclampf) {
+        this._gamma = gamma;
+    }
+
 
     /**
      * Converts the color scale into an array of interleaved unsigned int values of the requested color space.
      * @param space - Color space that is to be used for the array.
-     * @param alpha - Whether or not alpha is to be included.
+     * @todo This is currently not in line with the color.rgbUI8 interface, perhaps a generic UI8 and F32 conversion is required.
      */
-    bitsUI8(space: Space = Space.RGB, alpha: boolean = true): Uint8ClampedArray {
+    bitsUI8(space: ColorSpace = ColorSpace.rgb, alpha: boolean = false): Uint8ClampedArray {
         const size = this._colors.length;
         const stride = alpha ? 4 : 3;
         const bits = new Uint8ClampedArray(size * stride);
+        const encoding = getEncodingFromSpace(space, space !== ColorSpace.cmyk && alpha);
 
+        let color: Color;
+        let tuple: ColorTuple;
         for (let i = 0; i < size; ++i) {
-            const color = this._colors[i].tuple(space, alpha);
-            bits[i * stride + 0] = color[0] * 255;
-            bits[i * stride + 1] = color[1] * 255;
-            bits[i * stride + 2] = color[2] * 255;
-            if (alpha && color.length === 4) {
-                bits[i * stride + 3] = color[3] * 255;
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            color = Color.clone(this.color(i)!);
+            if (this._deficiency !== ColorVisionDeficiency.None) {
+                tuple = daltonize(color.rgb, this._deficiency, this._gamma);
+                color.fromRGB(tuple[0], tuple[1], tuple[2], color.a);
+            }
+            tuple = color.tuple(encoding);
+
+            bits[i * stride + 0] = tuple[0] * 255;
+            bits[i * stride + 1] = tuple[1] * 255;
+            bits[i * stride + 2] = tuple[2] * 255;
+            if (tuple.length === 4) {
+                bits[i * stride + 3] = tuple[3] * 255;
             }
         }
         return bits;
@@ -362,21 +384,32 @@ export class ColorScale {
 
     /**
      * Converts the color scale into an array of interleaved float values of the requested color space.
-     * @param space - Color space that is to be used for the array.
-     * @param alpha - Whether or not alpha is to be included.
+     * Note, that CMYK encoding will ignore the alpha channel.
+     * @param space - Color encoding that is to be used for the array.
+     * @todo This is currently not in line with the color.rgbF32 interface, perhaps a generic UI8 and F32 conversion is required.
      */
-    bitsF32(space: Space = Space.RGB, alpha: boolean = true): Float32Array {
+    bitsF32(space: ColorSpace = ColorSpace.rgb, alpha: boolean = false): Float32Array {
         const size = this._colors.length;
         const stride = alpha ? 4 : 3;
         const bits = new Float32Array(size * stride);
+        const encoding = getEncodingFromSpace(space, space !== ColorSpace.cmyk && alpha);
 
+        let color: Color;
+        let tuple: ColorTuple;
         for (let i = 0; i < size; ++i) {
-            const color = this._colors[i].tuple(space, alpha);
-            bits[i * stride + 0] = color[0];
-            bits[i * stride + 1] = color[1];
-            bits[i * stride + 2] = color[2];
-            if (alpha && color.length === 4) {
-                bits[i * stride + 3] = color[3];
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            color = Color.clone(this.color(i)!);
+            if (this._deficiency !== ColorVisionDeficiency.None) {
+                tuple = daltonize(color.rgb, this._deficiency, this._gamma);
+                color.fromRGB(tuple[0], tuple[1], tuple[2], color.a);
+            }
+            tuple = color.tuple(encoding);
+
+            bits[i * stride + 0] = tuple[0];
+            bits[i * stride + 1] = tuple[1];
+            bits[i * stride + 2] = tuple[2];
+            if (tuple.length === 4) {
+                bits[i * stride + 3] = tuple[3];
             }
         }
         return bits;
@@ -399,17 +432,13 @@ export enum ScaleType {
     qualitative = 'qualitative',
 }
 
-export enum ArrayType {
-    RGB = 'rgb',
-    RGBf = 'rgbf',
-    RGBA = 'rgba',
-    RGBAf = 'rgbaf',
-}
+/** @todo just support all encodings ...  */
+type SupportedEncodings = ColorEncoding.RGB | ColorEncoding.RGBA | ColorEncoding.rgb | ColorEncoding.rgba;
 
 export interface Preset {
     identifier: string;
     type: ScaleType | undefined;
-    format: ArrayType;
+    encoding: SupportedEncodings;
     colors: Array<Array<number>>;
     positions: Array<Array<number>> | undefined;
 }

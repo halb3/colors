@@ -1,7 +1,7 @@
 // Place your settings in this file to overwrite default and user settings.
 {
     "editor.formatOnSave": true,
-    "editor.detectIndentation": true,
+    "editor.detectIndentation": false,
     "[json]": {
         "editor.insertSpaces": true,
         "editor.tabSize": 4,
@@ -89,6 +89,7 @@
         "grayscale",
         "grayscales",
         "haeley",
+        "hexa",
         "hsla",
         "ibos",
         "icosahedron",
