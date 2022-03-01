@@ -4,10 +4,9 @@
 import { assert, fetchJsonAsync, jsonschema } from '@haeley/auxiliaries';
 import { clamp } from '@haeley/math';
 
-import { ColorSpace, getEncodingFromSpace } from './encoding';
+import { ColorEncoding, ColorSpace, getEncodingFromSpace, length } from './encoding';
 import { ColorVisionDeficiency, daltonize } from './daltonize';
-import { DEFAULT_GAMMA } from './conversion';
-import { Color } from './color';
+import { Color, DEFAULT_GAMMA } from './color';
 import { lerp } from './lerp';
 
 import PresetsSchema from './colorscalepresets.schema.json';
@@ -52,23 +51,6 @@ export class ColorScale {
 
 
     /**
-     * Returns the stride for interleaved arrays of color components based on the array type.
-     * @param type - One of the supported color array types.
-     */
-    protected static stride(type: ArrayType): number {
-        switch (type) {
-            case ArrayType.RGBA:
-            case ArrayType.RGBAf:
-                return 4;
-            case ArrayType.RGB:
-            case ArrayType.RGBf:
-            default:
-                return 3;
-        }
-    }
-
-
-    /**
      * Fetches a color schema file, and, if successful, picks a preset for the specified number of steps. If the named
      * preset cannot be found, a list of all available presets within the file is logged and undefined is returned. If
      * the preset does not specify exact colors for the requested number of steps, the color array with the most colors
@@ -109,8 +91,8 @@ export class ColorScale {
                 return undefined;
             }
 
-            const type = p.format;
-            const stride = ColorScale.stride(type);
+            const encoding = p.encoding as SupportedEncodings;
+            const stride = length(encoding);
 
             /* Find best color array match for targeted step count. The best match is either the exact number of
             colors or the largest available number. */
@@ -128,7 +110,7 @@ export class ColorScale {
             /* Check if there is a matching positions array to the selected color array. */
             const positionsByStepCount = p.positions;
             if (positionsByStepCount === undefined) {
-                return ColorScale.fromArray(colors, type, stepCount, undefined);
+                return ColorScale.fromArray(colors, encoding, stepCount, undefined);
             }
 
             let positions: Array<number> | undefined;
@@ -138,7 +120,7 @@ export class ColorScale {
                 }
                 positions = positionsByStepCount[i];
             }
-            return ColorScale.fromArray(colors, type, stepCount, positions);
+            return ColorScale.fromArray(colors, encoding, stepCount, positions);
         };
 
         return fetchJsonAsync<ColorScale>(url, transform, ColorScale.PresetSchema);
@@ -148,36 +130,36 @@ export class ColorScale {
      * Creates a color scale from a set of colors and (optional) positions for a specific step count. If no positions
      * are specified, the colors are spread equally. A step count of 1 returns the first color.
      * @param interleavedColorComponents - Interleaved array of color components, e.g., red, green, and blue.
-     * @param type - The array type specifying the number of subsequent color components for each color.
+     * @param encoding - The array type specifying the number of subsequent color components for each color.
      * @param stepCount - Number of colors to be computed from the color scale.
      * @param positions - Interleaved array of positions, matching the length of the color array divided by stride.
      * @returns - A color scale of fixed number and position of colors for index and linear interpolation access.
      */
-    static fromArray(interleavedColorComponents: Array<number>, type: ArrayType,
+    static fromArray(interleavedColorComponents: Array<number>, encoding: SupportedEncodings,
         stepCount: number, positions?: Array<number>): ColorScale {
         if (stepCount === 0 || interleavedColorComponents.length === 0) {
             return new ColorScale();
         }
 
         const array = interleavedColorComponents; // just a shorter handle
-        const stride = ColorScale.stride(type);
+        const stride = length(encoding);
         const size = array.length / stride;
         const colors = new Array<Color>(size);
 
         /* Transform the interleaved array values into instances of Color. */
         for (let i = 0; i < array.length; i += stride) {
             const color = new Color();
-            switch (type) {
-                case ArrayType.RGB:
+            switch (encoding) {
+                case ColorEncoding.RGB:
                     color.fromUI8(array[i + 0], array[i + 1], array[i + 2]);
                     break;
-                case ArrayType.RGBA:
+                case ColorEncoding.RGBA:
                     color.fromUI8(array[i + 0], array[i + 1], array[i + 2], array[i + 3]);
                     break;
-                case ArrayType.RGBf:
+                case ColorEncoding.rgb:
                     color.fromF32(array[i + 0], array[i + 1], array[i + 2]);
                     break;
-                case ArrayType.RGBAf:
+                case ColorEncoding.rgba:
                     color.fromF32(array[i + 0], array[i + 1], array[i + 2], array[i + 3]);
                     break;
                 default:
@@ -371,6 +353,7 @@ export class ColorScale {
     /**
      * Converts the color scale into an array of interleaved unsigned int values of the requested color space.
      * @param space - Color space that is to be used for the array.
+     * @todo This is currently not in line with the color.rgbUI8 interface, perhaps a generic UI8 and F32 conversion is required.
      */
     bitsUI8(space: ColorSpace = ColorSpace.rgb, alpha: boolean = false): Uint8ClampedArray {
         const size = this._colors.length;
@@ -403,6 +386,7 @@ export class ColorScale {
      * Converts the color scale into an array of interleaved float values of the requested color space.
      * Note, that CMYK encoding will ignore the alpha channel.
      * @param space - Color encoding that is to be used for the array.
+     * @todo This is currently not in line with the color.rgbF32 interface, perhaps a generic UI8 and F32 conversion is required.
      */
     bitsF32(space: ColorSpace = ColorSpace.rgb, alpha: boolean = false): Float32Array {
         const size = this._colors.length;
@@ -448,17 +432,13 @@ export enum ScaleType {
     qualitative = 'qualitative',
 }
 
-export enum ArrayType {
-    RGB = 'rgb',
-    RGBf = 'rgbf',
-    RGBA = 'rgba',
-    RGBAf = 'rgbaf',
-}
+/** @todo just support all encodings ...  */
+type SupportedEncodings = ColorEncoding.RGB | ColorEncoding.RGBA | ColorEncoding.rgb | ColorEncoding.rgba;
 
 export interface Preset {
     identifier: string;
     type: ScaleType | undefined;
-    format: ArrayType;
+    encoding: SupportedEncodings;
     colors: Array<Array<number>>;
     positions: Array<Array<number>> | undefined;
 }

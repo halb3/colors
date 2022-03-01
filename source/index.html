@@ -354,11 +354,7 @@
                 context.fillRect(0, 0, canvas.width, canvas.height);
             };
 
-            const updateColor = (color, updatePickr = true) => {
-
-                if (updatePickr) {
-                    pickr.setColor(color.toString('RGBa', 4, 'rgba'));
-                }
+            const updateColor = (color, updatePickr = false) => {
 
                 updateColorCanvas(color0, context0, color.rgba);
                 updateColorCanvas(color1, context1, color.srgba(gamma));
@@ -389,6 +385,7 @@
                 textHex.value = color.hexRGB;
                 numberAlpha.value = color.a.toFixed(2);
 
+
                 preString.innerHTML =
                     `// example code using the Color class:
 const colors = new Array<Color>(8);
@@ -409,10 +406,14 @@ colors[7] = Color.random();`;
                 updateColor(test);
             }
 
+            pickr.on('show', (color, instance) => {
+                pickr.setColor(test.toString('RGBa', 4, 'rgba'));
+            });
+
             pickr.on('change', (color, source, instance) => {
                 const rgba = color.toRGBA();
                 rgba[3] *= 255; // some issue with alpha representation when not used
-                updateColor(test.fromUI8(rgba[0], rgba[1], rgba[2], rgba[3]), false);
+                updateColor(test.fromUI8(rgba[0], rgba[1], rgba[2], rgba[3]));
             });
 
             textF32.onchange = () => {
@@ -445,7 +446,7 @@ colors[7] = Color.random();`;
             }
             numberGamma.onchange = () => {
                 gamma = numberGamma.value;
-                updateColor(test, false);
+                updateColor(test);
             }
 
             updateColor(test);

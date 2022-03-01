@@ -3,21 +3,22 @@
 
 import { assert, Alterable, log, LogLevel, Serializable } from '@haeley/auxiliaries';
 import {
-    clamp, clampf, clampf4, duplicate4, equals4, GLclampf3, GLclampf4, GLclampf5
+    clampf, clampf4, duplicate4, equals4, GLclampf3, GLclampf4, GLclampf5
 } from '@haeley/math';
 
-import { ColorTuple, ColorEncoding } from './encoding';
+import { ColorTuple, ColorEncoding, GLubyte, length } from './encoding';
 import {
     cmyk2rgb, hex2rgba, hsl2rgb, lab2rgb,
     rgb2cmyk, rgb2hex, rgb2hsl, rgb2lab, rgba2hex, rgb2srgb, rgba2srgba,
-    DEFAULT_GAMMA, HEX_FORMAT_REGEX, COLOR_STRING_REGEX
+    rgb2RGB, rgba2RGBA, rgba2RGBa, RGBA2rgba, RGBa2rgba,
+    HEX_FORMAT_REGEX, COLOR_STRING_REGEX
 } from './conversion';
 
 /* spellchecker: enable */
 
 
-/** @todo remove this when webgl types are working again. */
-export type GLubyte = number;
+export const DEFAULT_ALPHA: GLclampf = 1.0;
+export const DEFAULT_GAMMA: GLclampf = 2.2;
 
 
 /**
@@ -28,8 +29,6 @@ export type GLubyte = number;
  */
 export class Color implements Serializable, Alterable {
 
-    static readonly DEFAULT_ALPHA: GLclampf = 1.0;
-
     static random(alpha: boolean = false): Color {
         return new Color([Math.random(), Math.random(), Math.random()], alpha ? Math.random() : 1.0);
     }
@@ -38,7 +37,7 @@ export class Color implements Serializable, Alterable {
         return new Color(color.rgba);
     }
 
-    protected _rgba: GLclampf4 = [0.0, 0.0, 0.0, Color.DEFAULT_ALPHA];
+    protected _rgba: GLclampf4 = [0.0, 0.0, 0.0, DEFAULT_ALPHA];
 
 
     /** @see {@link altered} */
@@ -99,13 +98,13 @@ export class Color implements Serializable, Alterable {
         }
 
         // first group is the color space identifier, second group the numbers within parenthesis
-        const matches = colorstr.match(/^(rgba?|RGBA?|hsla?|laba?|cmyka?)\((.*?)\)$/);
+        const matches = colorstr.match(/^(rgba?|RGBA?||RGBa?|hsla?|laba?|cmyka?)\((.*?)\)$/);
         if (matches === null) {
             return this;
         }
 
         const values = JSON.parse(`[${matches[2]}]`);
-        assert(values.length === 3, `'${matches[1]}' string expected to provide ${matches[1].length} decimal values, given ${values.length} ('${matches[2]}')`);
+        assert(values.length === length(matches[1] as ColorEncoding), `'${matches[1]}' string expected to provide ${matches[1].length} decimal values, given ${values.length} ('${matches[2]}')`);
 
         switch (matches[1]) { //
             case 'rgb':
@@ -116,6 +115,10 @@ export class Color implements Serializable, Alterable {
                 return this.fromUI8(values[0], values[1], values[2], alpha);
             case 'RGBA':
                 return this.fromUI8(values[0], values[1], values[2], values[3]);
+            case 'RGBa': {
+                const rgba = RGBa2rgba(values);
+                return this.fromRGB(rgba[0], rgba[1], rgba[2], rgba[3]);
+            }
             case 'hsl':
                 return this.fromHSL(values[0], values[1], values[2], alpha);
             case 'hsla':
@@ -181,13 +184,13 @@ export class Color implements Serializable, Alterable {
      * @param alpha - Alpha color component in [0.0, 1.0]
      * @returns - The color instance (this).
      */
-    fromF32(red: GLfloat, green: GLfloat, blue: GLfloat, alpha: GLfloat = Color.DEFAULT_ALPHA): Color {
+    fromF32(red: GLfloat, green: GLfloat, blue: GLfloat, alpha: GLfloat = DEFAULT_ALPHA): Color {
         const previous = duplicate4<GLclampf>(this._rgba);
 
-        this._rgba[0] = clampf(red, `red value`);
-        this._rgba[1] = clampf(green, `green value`);
-        this._rgba[2] = clampf(blue, `blue value`);
-        this._rgba[3] = clampf(alpha, `alpha value`);
+        this._rgba[0] = clampf(red);
+        this._rgba[1] = clampf(green);
+        this._rgba[2] = clampf(blue);
+        this._rgba[3] = clampf(alpha);
 
         this._altered = !equals4<GLclampf>(this._rgba, previous);
         return this;
@@ -202,14 +205,10 @@ export class Color implements Serializable, Alterable {
      * @returns - The color instance (this).
      */
     fromUI8(red: GLubyte, green: GLubyte, blue: GLubyte,
-        alpha: GLubyte = Math.floor(Color.DEFAULT_ALPHA * 255)): Color {
+        alpha: GLubyte = Math.floor(DEFAULT_ALPHA * 255)): Color {
         const previous = duplicate4<GLclampf>(this._rgba);
 
-        const oneOver255 = 1.0 / 255.0;
-        this._rgba[0] = clamp(red, 0, 255) * oneOver255;
-        this._rgba[1] = clamp(green, 0, 255) * oneOver255;
-        this._rgba[2] = clamp(blue, 0, 255) * oneOver255;
-        this._rgba[3] = clamp(alpha, 0, 255) * oneOver255;
+        this._rgba = RGBA2rgba([red, green, blue, alpha]);
 
         this._altered = !equals4<GLclampf>(this._rgba, previous);
         return this;
@@ -224,7 +223,7 @@ export class Color implements Serializable, Alterable {
      * @returns - The color instance (this).
      */
     fromRGB(red: GLclampf, green: GLclampf, blue: GLclampf,
-        alpha: GLclampf = Color.DEFAULT_ALPHA): Color {
+        alpha: GLclampf = DEFAULT_ALPHA): Color {
         const previous = duplicate4<GLclampf>(this._rgba);
 
         this._rgba = clampf4([red, green, blue, alpha], 'RGBA input');
@@ -242,7 +241,7 @@ export class Color implements Serializable, Alterable {
      * @returns - The color instance (this).
      */
     fromHSL(hue: GLclampf, saturation: GLclampf, lightness: GLclampf,
-        alpha: GLclampf = Color.DEFAULT_ALPHA): Color {
+        alpha: GLclampf = DEFAULT_ALPHA): Color {
         const previous = duplicate4<GLclampf>(this._rgba);
 
         const rgb = hsl2rgb([hue, saturation, lightness]);
@@ -263,8 +262,8 @@ export class Color implements Serializable, Alterable {
      * @returns - The color instance (this).
      */
     fromLAB(lightness: GLclampf, greenRed: GLclampf, blueYellow: GLclampf,
-        alpha: GLclampf = Color.DEFAULT_ALPHA): Color {
-        const previous = duplicate4<GLclampf>(this._rgba);
+        alpha: GLclampf = DEFAULT_ALPHA): Color {
+        const previous = clampf4(this._rgba);
 
         const rgb = lab2rgb([lightness, greenRed, blueYellow]);
         const alphaf = clampf(alpha, 'ALPHA input');
@@ -285,7 +284,7 @@ export class Color implements Serializable, Alterable {
      * @returns - The color instance (this).
      */
     fromCMYK(cyan: GLclampf, magenta: GLclampf, yellow: GLclampf, key: GLclampf,
-        alpha: GLclampf = Color.DEFAULT_ALPHA): Color {
+        alpha: GLclampf = DEFAULT_ALPHA): Color {
         const previous = duplicate4<GLclampf>(this._rgba);
 
         const rgb = cmyk2rgb([cyan, magenta, yellow, key]);
@@ -392,66 +391,42 @@ export class Color implements Serializable, Alterable {
      * Read access to the RGB components as floating point 3-tuple, each value in range [0.0, 255.0].
      */
     get RGB(): [GLubyte, GLubyte, GLubyte] {
-        return [
-            Math.round(this._rgba[0] * 255.0),
-            Math.round(this._rgba[1] * 255.0),
-            Math.round(this._rgba[2] * 255.0)];
+        return rgb2RGB(this.rgb);
     }
 
     /**
      * Read access to the RGB components as unsigned byte 4-tuple, each value in range [0, 255].
      */
     get RGBA(): [GLubyte, GLubyte, GLubyte, GLubyte] {
-        return [
-            Math.round(this._rgba[0] * 255.0),
-            Math.round(this._rgba[1] * 255.0),
-            Math.round(this._rgba[2] * 255.0),
-            Math.round(this._rgba[3] * 255.0)];
+        return rgba2RGBA(this._rgba);
     }
 
     /**
      * Read access to the RGB components as 4-tuple, alpha as float in [0.0, 1.0], rgb values in range [0, 255].
      */
     get RGBa(): [GLubyte, GLubyte, GLubyte, GLclampf] {
-        return [
-            Math.round(this._rgba[0] * 255.0),
-            Math.round(this._rgba[1] * 255.0),
-            Math.round(this._rgba[2] * 255.0),
-            this._rgba[3]];
+        return rgba2RGBa(this._rgba);
     }
 
     /**
      * Read access to the RGB components as array of three bytes (8bit unsigned int), each in range [0, 255].
      */
     get rgbUI8(): Uint8Array {
-        const ui8Array = new Uint8Array(3);
-        ui8Array[0] = Math.round(this._rgba[0] * 255.0);
-        ui8Array[1] = Math.round(this._rgba[1] * 255.0);
-        ui8Array[2] = Math.round(this._rgba[2] * 255.0);
-        return ui8Array;
+        return new Uint8Array(rgb2RGB(this.rgb));
     }
 
     /**
      * Read access to the RGB components as array of three 32bit floats, each in range [0.0, 1.0].
      */
     get rgbF32(): Float32Array {
-        const f32Array = new Float32Array(3);
-        f32Array[0] = this._rgba[0];
-        f32Array[1] = this._rgba[1];
-        f32Array[2] = this._rgba[2];
-        return f32Array;
+        return new Float32Array(this.rgb);
     }
 
     /**
      * Read access to the RGBA components as array of four bytes (8bit unsigned int), each in range [0, 255].
      */
     get rgbaUI8(): Uint8Array {
-        const ui8Array = new Uint8Array(4);
-        ui8Array[0] = Math.round(this._rgba[0] * 255.0);
-        ui8Array[1] = Math.round(this._rgba[1] * 255.0);
-        ui8Array[2] = Math.round(this._rgba[2] * 255.0);
-        ui8Array[3] = Math.round(this._rgba[3] * 255.0);
-        return ui8Array;
+        return new Uint8Array(rgba2RGBA(this._rgba));
     }
 
     /**

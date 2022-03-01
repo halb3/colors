@@ -6,8 +6,9 @@ import { vec2, vec3, GLclampf3, GLclampf4 } from '@haeley/math';
 
 import {
     rgb2srgb, srgb2rgb, srgba2rgba, srgb2xyz, xyz2srgb,
-    DEFAULT_GAMMA, D65
+    D65
 } from './conversion';
+import { DEFAULT_GAMMA } from './color';
 
 /* spellchecker: enable */
 

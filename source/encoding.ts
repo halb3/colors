@@ -2,12 +2,13 @@
 /* spellchecker: disable */
 
 import {
-    GLclampf3, GLclampf4, GLclampf5
+    GLclampf3, GLclampf4, GLclampf5,
 } from '@haeley/math';
 
-import { GLubyte } from '.';
-
 /* spellchecker: enable */
+
+/** @todo remove this when webgl types are working again. */
+export type GLubyte = number;
 
 /**
  * Color encodings covered by this library.
@@ -26,6 +27,31 @@ export enum ColorEncoding {
     cmyka = 'cmyka',
     hex = 'hex',
     hexa = 'hexa'
+}
+
+/**
+ * Returns the stride, the number of components, for interleaved arrays of color components based on the encoding.
+ * @param encoding - A color encoding.
+ */
+export function length(encoding: ColorEncoding): number {
+    switch (encoding) {
+        case ColorEncoding.rgb:
+        case ColorEncoding.RGB:
+        case ColorEncoding.hsl:
+        case ColorEncoding.lab:
+        case ColorEncoding.hex:
+            return 3;
+        case ColorEncoding.rgba:
+        case ColorEncoding.RGBA:
+        case ColorEncoding.RGBa:
+        case ColorEncoding.hsla:
+        case ColorEncoding.laba:
+        case ColorEncoding.cmyk:
+        case ColorEncoding.hexa:
+            return 4;
+        case ColorEncoding.cmyka:
+            return 5;
+    }
 }
 
 /**
