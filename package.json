@@ -1,16 +1,16 @@
 {
-    "name": "haeley-colors",
+    "name": "@haeley/colors",
     "version": "0.2.1",
     "license": "MIT",
     "description": "Color and color scale tools for the haeley real-time rendering framework.",
     "author": "Daniel Limberger",
-    "main": "dist/haeley-colors.umd.js",
+    "main": "dist/colors.umd.js",
     "types": "dist/index.d.ts",
     "exports": {
-        "import": "./dist/haeley-colors.es.js",
-        "require": "./dist/haeley-colors.umd.js"
+        "import": "./dist/colors.es.js",
+        "require": "./dist/colors.umd.js"
     },
-    "module": "dist/haeley-colors.es.js",
+    "module": "dist/colors.es.js",
     "files": [
         "dist/*",
         "source/**/*.ts",
@@ -19,11 +19,11 @@
     ],
     "bugs": {
         "email": "cgdaniel@outlook.com",
-        "url": "https://github.com/halb3/haeley-colors/issues"
+        "url": "https://github.com/halb3/colors/issues"
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/halb3/haeley-colors.git"
+        "url": "git+https://github.com/halb3/colors.git"
     },
     "maintainers": [
         {
