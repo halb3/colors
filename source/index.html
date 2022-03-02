@@ -267,10 +267,14 @@
 </body>
 
 <script type="module">
+
     import * as auxiliaries from '@haeley/auxiliaries';
     import * as math from '@haeley/math';
     import * as colors from './index.ts';
     window['haeley'] = { auxiliaries, math, colors };
+
+    console.log("'haeley' imported:", haeley);
+
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
@@ -286,8 +290,6 @@
         document.querySelector('#branch').innerHTML = haeley.colors.branch();
         document.querySelector('#commit').innerHTML = haeley.colors.commit();
         document.querySelector('#cryear').innerHTML = new Date().getFullYear();
-
-        console.log("'haeley-colors' imported:", haeley);
 
         { // Color Features
 
